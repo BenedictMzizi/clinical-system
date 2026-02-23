@@ -1,0 +1,5 @@
+export const BillingStatus = {
+  PENDING: "PENDING",
+  PAID: "PAID",
+  PAIDCONSULTATION: "PAIDCONSULTATION" 
+};
