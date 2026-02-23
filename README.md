@@ -1,14 +1,23 @@
-# Electronic Clinical Workflow Management System
+# Clinical Management System
 
-All users (Admin, Receptionist, Consultant, Pharmacist) authenticate via Supabase Auth.
-Every action is logged for audit purposes.
+Full-stack clinical workflow system built with:
 
-## Deployment
-- Frontend: React (Vercel)
-- Backend: Supabase (PostgreSQL, Auth, RLS, Storage)
+- React
+- Supabase
+- Role-based access control
+- Audit logging
+- Pharmacy & Billing modules
 
-## Roles
-- Admin: Sytem auditor
-- Receptionist: Search, update contact, create visits
-- Consultant: Exclusive consultation, SOAP, prescriptions
-- Pharmacist: Dispense meds, add substitution notes
+## Features
+
+- Authentication & role management
+- Patient registration
+- Consultation workflow
+- Billing
+- Pharmacy queue
+- Audit logging
+
+## Tech Stack
+
+- Frontend: React
+- Backend: Supabase (Postgres + RLS)
