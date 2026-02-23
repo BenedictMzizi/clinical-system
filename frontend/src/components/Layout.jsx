@@ -9,6 +9,7 @@ export default function Layout({ children }) {
   const [role, setRole] = useState(null);
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -48,9 +49,7 @@ export default function Layout({ children }) {
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        if (!session) {
-          navigate("/login", { replace: true });
-        }
+        if (!session) navigate("/login", { replace: true });
       }
     );
 
@@ -70,16 +69,17 @@ export default function Layout({ children }) {
 
     return (
       <div
-        onClick={() => navigate(path)}
+        onClick={() => {
+          navigate(path);
+          setSidebarOpen(false); // close mobile menu
+        }}
         className={`group flex items-center px-4 py-3 rounded-xl cursor-pointer font-medium transition-all duration-200
-        ${
-          active
+          ${active
             ? "bg-blue-600 text-white shadow-md"
             : "text-gray-400 hover:bg-gray-800 hover:text-white"
-        }`}
+          }`}
       >
         <span className="tracking-wide">{label}</span>
-
         {active && (
           <span className="ml-auto w-2 h-2 bg-white rounded-full opacity-80"></span>
         )}
@@ -100,22 +100,16 @@ export default function Layout({ children }) {
             <MenuItem label="IT Admin" path="/it-admin" />
           </div>
         );
-
       case "receptionist":
         return <MenuItem label="Reception" path="/reception" />;
-     
       case "nurse":
         return <MenuItem label="Vitals" path="/vitals" />;
-
       case "consultant":
         return <MenuItem label="Consultations" path="/consultant" />;
-
       case "pharmacist":
         return <MenuItem label="Pharmacy" path="/pharmacy" />;
-
       case "it":
         return <MenuItem label="IT Admin" path="/it-admin" />;
-
       default:
         return null;
     }
@@ -134,33 +128,34 @@ export default function Layout({ children }) {
     <div className="flex h-screen bg-gray-100">
 
       {/* Sidebar */}
-      <aside className="w-72 bg-gray-900 text-gray-300 flex flex-col shadow-xl">
-
+      <aside
+        className={`fixed z-20 top-0 left-0 w-64 h-full bg-gray-900 text-gray-300 flex flex-col shadow-xl transition-transform duration-300
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-64"} md:translate-x-0`}
+      >
         {/* Logo */}
-        <div className="px-6 py-6 border-b border-gray-800">
-          <div className="text-2xl font-bold text-white tracking-tight">
-            Clinical System
+        <div className="px-6 py-6 border-b border-gray-800 flex justify-between items-center">
+          <div>
+            <div className="text-2xl font-bold text-white tracking-tight">Clinical System</div>
+            <div className="text-xs text-gray-500 mt-1">Hospital Management Platform</div>
           </div>
-          <div className="text-xs text-gray-500 mt-1">
-            Hospital Management Platform
-          </div>
+          <button
+            className="md:hidden text-gray-400 hover:text-white"
+            onClick={() => setSidebarOpen(false)}
+          >
+            &#10005;
+          </button>
         </div>
 
         {/* User */}
         <div className="px-6 py-5 border-b border-gray-800">
           <div className="bg-gray-800 rounded-xl p-4">
-            <div className="text-white font-semibold text-base">
-              {fullName}
-            </div>
-
-            <div className="text-xs text-gray-400 capitalize mt-1">
-              {role}
-            </div>
+            <div className="text-white font-semibold text-base">{fullName}</div>
+            <div className="text-xs text-gray-400 capitalize mt-1">{role}</div>
           </div>
         </div>
 
         {/* Menu */}
-        <nav className="flex-1 px-4 py-6 space-y-1">
+        <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
           <RoleMenu />
         </nav>
 
@@ -173,26 +168,23 @@ export default function Layout({ children }) {
             Logout
           </button>
         </div>
-
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-y-auto">
+      <div className="flex-1 flex flex-col md:ml-64">
 
-        {/* Top bar */}
-        <div className="bg-white border-b px-8 py-4 shadow-sm">
-          <div className="text-lg font-semibold text-gray-800 capitalize">
-            {role} Portal
-          </div>
+        {/* Mobile top bar */}
+        <div className="md:hidden flex justify-between items-center bg-gray-900 text-white px-4 py-3 shadow">
+          <button onClick={() => setSidebarOpen(true)}>&#9776;</button>
+          <div className="font-semibold">Clinical System</div>
+          <div></div>
         </div>
 
         {/* Page content */}
-        <div className="p-8">
+        <main className="flex-1 overflow-y-auto p-6 md:p-8">
           {children}
-        </div>
-
-      </main>
-
+        </main>
+      </div>
     </div>
   );
 }
