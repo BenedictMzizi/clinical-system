@@ -120,7 +120,17 @@ export default function Login() {
       setLoading(false);
     }
   }
+const demoAccounts = [
+  { role: "Receptionist", email: "reception@test.com" },
+  { role: "Consultant", email: "doctor@test.com" },
+  { role: "Pharmacist", email: "pharmacy@test.com" },
+  { role: "Nurse", email: "nurse@test.com" },
+];
 
+function useDemoAccount(email) {
+  setEmail(email);
+  setPassword("password");
+}
   return (
 
     <div style={{
@@ -169,6 +179,32 @@ export default function Login() {
             {error}
           </div>
         }
+        <hr style={{ margin: "20px 0" }} />
+
+<div style={{ fontSize: 13 }}>
+  <h4 style={{ marginBottom: 8 }}>Demo Access (Role-Based)</h4>
+  <p style={{ marginBottom: 10 }}>
+    Select a role to explore the workflow:
+  </p>
+
+  {demoAccounts.map(account => (
+    <div
+      key={account.role}
+      onClick={() => useDemoAccount(account.email)}
+      style={{
+        cursor: "pointer",
+        padding: "6px 0",
+        color: "#2563eb"
+      }}
+    >
+      {account.role}
+    </div>
+  ))}
+
+  <p style={{ marginTop: 10, fontStyle: "italic" }}>
+    Password: <strong>password</strong>
+  </p>
+</div>
 
       </form>
 
