@@ -202,7 +202,7 @@ function useDemoAccount(email) {
   ))}
 
   <p style={{ marginTop: 10, fontStyle: "italic" }}>
-    Password: <strong>password</strong>
+    Password: <strong>auto fills</strong>
   </p>
 </div>
 
