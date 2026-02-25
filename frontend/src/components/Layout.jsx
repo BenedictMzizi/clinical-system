@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { useNavigate, useLocation } from "react-router-dom";
+import Footer from "../components/Footer";
 
 export default function Layout({ children }) {
   const navigate = useNavigate();
@@ -183,6 +184,7 @@ export default function Layout({ children }) {
         {/* Page content */}
         <main className="flex-1 overflow-y-auto p-6 md:p-8">
           {children}
+           <Footer />
         </main>
       </div>
     </div>
