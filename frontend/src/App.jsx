@@ -1,11 +1,8 @@
 import React from "react";
 import './index.css';
-
 import { Routes, Route } from "react-router-dom";
-
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
-
 import Login from "./pages/Login";
 import AdminDashboard from "./pages/AdminDashboard";
 import Reception from "./pages/Reception";
