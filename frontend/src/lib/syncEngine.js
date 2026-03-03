@@ -2,9 +2,6 @@ import { supabase } from "./supabase";
 import { getWriteQueue, setWriteQueue } from "./globalDataLayer";
 import { v4 as uuidv4 } from "uuid";
 
-
-
-
 function getStoredProfile() {
   try {
     return JSON.parse(localStorage.getItem("profile")) || null;
