@@ -122,9 +122,9 @@ export default function Login() {
   }
 const demoAccounts = [
   { role: "Receptionist", email: "reception@test.com" },
+  { role: "Nurse", email: "nurse@test.com" },
   { role: "Consultant", email: "doctor@test.com" },
   { role: "Pharmacist", email: "pharmacy@test.com" },
-  { role: "Nurse", email: "nurse@test.com" },
 ];
 
 function useDemoAccount(email) {
