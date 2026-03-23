@@ -35,7 +35,7 @@ export default function Pharmacy() {
 
   const [profile, setProfile] = useState(null);
 
-  const visitId = prescription.visit_id;
+  //const visitId = prescription.visit_id;
 
 
 
@@ -283,7 +283,7 @@ export default function Pharmacy() {
       
             await globalUpdate(
               "visits",
-              { id: visitId },
+              { id: prescription.visit_id },
               {
                 status: VisitStatus.CLOSED,
                 updated_at: new Date().toISOString()
