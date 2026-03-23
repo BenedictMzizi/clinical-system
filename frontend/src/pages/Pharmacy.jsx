@@ -35,7 +35,7 @@ export default function Pharmacy() {
 
   const [profile, setProfile] = useState(null);
 
-  //const visitId = prescription.visit_id;
+  const visitId = prescription.visit_id;
 
 
 
