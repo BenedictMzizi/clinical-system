@@ -383,7 +383,6 @@ export default function Pharmacy() {
                 : undefined
           }}
         >
-
           <div>
 
             <strong>
@@ -392,6 +391,75 @@ export default function Pharmacy() {
 
             {" "}
             {p.patient?.id_number}
+
+            {selectedPrescription && (
+
+              <div
+               style={{
+               ...card,
+               marginTop: 20,
+               border: "2px solid #2563eb"
+              }}
+              >
+
+              <h3>Prescription Details</h3>
+
+               <p>
+               <strong>Patient:</strong>{" "}
+              {selectedPrescription.patient?.full_name}
+              </p>
+
+              <p>
+              <strong>ID Number:</strong>{" "}
+              {selectedPrescription.patient?.id_number}
+              </p>
+
+               <p>
+              <strong>Medication List:</strong>
+              </p>
+
+              <div style={{ marginBottom: 10 }}>
+              {formatMedications(
+              selectedPrescription.medications
+             )}
+           </div>
+
+           <p>
+      <strong>Doctor Notes:</strong>
+    </p>
+
+    <div style={{ marginBottom: 15 }}>
+      {selectedPrescription.pharmacist_note || "None"}
+    </div>
+
+     <button
+        style={buttonPrimary}
+        onClick={() =>
+        dispense(selectedPrescription)
+      }
+        disabled={
+        dispensingId === selectedPrescription.id
+       }
+        >
+        {dispensingId === selectedPrescription.id
+         ? "Dispensing..."
+         : "Confirm Dispense"}
+        </button>
+
+        <button
+        style={{
+                marginLeft: 10
+               }}
+              onClick={() =>
+              setSelectedPrescription(null)
+                }
+                >
+               Close
+               </button>
+
+              </div>
+
+            )}
 
           </div>
 
@@ -408,23 +476,16 @@ export default function Pharmacy() {
               p.created_at
             ).toLocaleString()}
           </div>
-
-      <button
-           style={{
-           ...buttonPrimary,
-         marginTop: 10
-           }}
-              onClick={() => setSelectedPrescription(p)}
-              >
-              View Prescription
-              </button>
-
-            {dispensingId === p.id
-              ? "Dispensing..."
-              : "Dispense"}
-
-          </button>
-
+         
+          <button
+            style={{
+              ...buttonPrimary,
+              marginTop: 10
+             }}
+             onClick={() => setSelectedPrescription(p)} 
+             >
+           View Prescription
+           </button>
         </div>
 
       ))}
