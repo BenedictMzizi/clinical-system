@@ -31,6 +31,7 @@ export default function Pharmacy() {
   const [dispensingId, setDispensingId] = useState(null);
   const [error, setError] = useState(null);
   const [profile, setProfile] = useState(null);
+  const [readyPrescriptions, setReadyPrescriptions] = useState([]);
 
 
   async function loadProfile() {
@@ -192,7 +193,7 @@ export default function Pharmacy() {
 
 
 
-  async function dispense(prescription) {
+  async function prepareMedication(prescription) {
 
     if (dispensingId) return;
 
@@ -247,20 +248,16 @@ export default function Pharmacy() {
 
 
       await globalUpdate(
-        "prescriptions",
-        { id: prescription.id },
+      "prescriptions",
+       { id: prescription.id },
         {
-          status: PrescriptionStatus.DISPENSED,
-
+          status: PrescriptionStatus.READY_FOR_COLLECTION,
           locked: true,
-
-          dispensed_by: user.id,
-
-          dispensed_at: new Date().toISOString(),
-
+          prepared_by: user.id,
+          prepared_at: new Date().toISOString(),
           updated_by: user.id
-        }
-      );
+         }
+        );
 
 
              await globalInsert(
@@ -268,26 +265,18 @@ export default function Pharmacy() {
               {
                 practice_id: profile.practice_id,
                 actor_id: user.id,
-                action: "PRESCRIPTION_DISPENSED",
+                action: "MEDICATION_PREPARED",
                 entity: "prescription",
                 entity_id: prescription.id,
                 created_at: new Date().toISOString()
                 }
               );
       
-            await globalUpdate(
-              "visits",
-              { id: prescription.visit_id },
-              {
-                status: VisitStatus.CLOSED,
-                updated_at: new Date().toISOString()
-              }
-            );
-
+           
 
 
       await loadPrescriptions();
-      
+      await loadReadyPrescriptions();
       setSelectedPrescription(null);
 
     }
@@ -306,7 +295,68 @@ export default function Pharmacy() {
 
   }
 
+  async function loadReadyPrescriptions() {
 
+    try {
+
+      if (!profile?.practice_id) return;
+
+      const { data, error } =
+        await supabase
+         .from("prescriptions")
+          .select(`
+            *,
+            patient:patients(*)
+        `  )
+          .eq(
+            "practice_id",
+            profile.practice_id
+          )
+          .eq(
+            "status",
+            PrescriptionStatus.READY_FOR_COLLECTION
+          );
+
+      if (error) throw error;
+
+      setReadyPrescriptions(data || []);
+
+    }
+    catch (err) {
+
+      console.error(err);
+
+    }
+
+}
+
+async function confirmCollection(prescription) {
+
+  const { data: { user } } =
+    await supabase.auth.getUser();
+
+  await globalUpdate(
+    "prescriptions",
+    { id: prescription.id },
+    {
+      status: PrescriptionStatus.DISPENSED,
+      dispensed_by: user.id,
+      dispensed_at: new Date().toISOString()
+    }
+  );
+
+  await globalUpdate(
+    "visits",
+    { id: prescription.visit_id },
+    {
+      status: VisitStatus.CLOSED,
+      updated_at: new Date().toISOString()
+    }
+  );
+
+  await loadReadyPrescriptions();
+
+}
   useEffect(() => {
 
     loadProfile();
@@ -316,9 +366,9 @@ export default function Pharmacy() {
 
   useEffect(() => {
 
-    if (profile)
+    if (!profile)
       loadPrescriptions();
-
+      loadReadyPrescriptions();
   }, [profile]);
 
 
@@ -371,7 +421,7 @@ export default function Pharmacy() {
         </div>
 
       }
-
+      
       {prescriptions.map(p => (
 
         <div
@@ -467,15 +517,15 @@ export default function Pharmacy() {
      <button
         style={buttonPrimary}
         onClick={() =>
-        dispense(selectedPrescription)
+        prepareMedication(selectedPrescription)
       }
         disabled={
         dispensingId === selectedPrescription.id
        }
         >
         {dispensingId === selectedPrescription.id
-         ? "Dispensing..."
-         : "Confirm Dispense"}
+         ? "Preparing..."
+         : "Prepare Medication"}
         </button>
 
         <button
