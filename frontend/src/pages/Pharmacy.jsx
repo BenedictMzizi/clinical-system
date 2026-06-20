@@ -287,6 +287,8 @@ export default function Pharmacy() {
 
 
       await loadPrescriptions();
+      
+      setSelectedPrescription(null);
 
     }
     catch (err) {
