@@ -392,7 +392,37 @@ export default function Pharmacy() {
             {" "}
             {p.patient?.id_number}
 
-            {selectedPrescription && (
+            
+          </div>
+
+          <div>
+            Medications:
+            {" "}
+            {formatMedications(p.medications)}
+          </div>
+
+          <div>
+            Created:
+            {" "}
+            {new Date(
+              p.created_at
+            ).toLocaleString()}
+          </div>
+         
+          <button
+            style={{
+              ...buttonPrimary,
+              marginTop: 10
+             }}
+             onClick={() => setSelectedPrescription(p)} 
+             >
+           View Prescription
+           </button>
+        </div>
+
+      ))}
+
+      {selectedPrescription && (
 
               <div
                style={{
@@ -461,34 +491,6 @@ export default function Pharmacy() {
 
             )}
 
-          </div>
-
-          <div>
-            Medications:
-            {" "}
-            {formatMedications(p.medications)}
-          </div>
-
-          <div>
-            Created:
-            {" "}
-            {new Date(
-              p.created_at
-            ).toLocaleString()}
-          </div>
-         
-          <button
-            style={{
-              ...buttonPrimary,
-              marginTop: 10
-             }}
-             onClick={() => setSelectedPrescription(p)} 
-             >
-           View Prescription
-           </button>
-        </div>
-
-      ))}
 
     </div>
 
