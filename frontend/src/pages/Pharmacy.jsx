@@ -26,17 +26,11 @@ export default function Pharmacy() {
 
 
   const [prescriptions, setPrescriptions] = useState([]);
-
+  const [selectedPrescription, setSelectedPrescription] = useState(null);
   const [loading, setLoading] = useState(true);
-
   const [dispensingId, setDispensingId] = useState(null);
-
   const [error, setError] = useState(null);
-
   const [profile, setProfile] = useState(null);
-
-  
-
 
 
   async function loadProfile() {
@@ -415,16 +409,15 @@ export default function Pharmacy() {
             ).toLocaleString()}
           </div>
 
-          <button
-            style={{
-              ...buttonPrimary,
-              marginTop: 10
-            }}
-            onClick={() => dispense(p)}
-            disabled={
-              dispensingId === p.id
-            }
-          >
+      <button
+           style={{
+           ...buttonPrimary,
+         marginTop: 10
+           }}
+              onClick={() => setSelectedPrescription(p)}
+              >
+              View Prescription
+              </button>
 
             {dispensingId === p.id
               ? "Dispensing..."
