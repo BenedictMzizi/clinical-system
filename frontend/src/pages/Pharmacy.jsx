@@ -23,8 +23,7 @@ import {
 
 
 export default function Pharmacy() {
-
-
+  
   const [prescriptions, setPrescriptions] = useState([]);
   const [selectedPrescription, setSelectedPrescription] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -37,7 +36,6 @@ export default function Pharmacy() {
   async function loadProfile() {
 
     try {
-
       const { data: { user } } =
         await supabase.auth.getUser();
 
@@ -371,6 +369,7 @@ async function confirmCollection(prescription) {
   );
 
   await loadReadyPrescriptions();
+  await loadPrescriptions();
 
 }
   useEffect(() => {
@@ -527,16 +526,22 @@ textAlign:"center"
 
         <br/>
 
-        {
-          {
-            (() => {const meds = typeof p.medications === "string"
-              ? JSON.parse(p.medications) : p.medications || [];
-                    return meds.length;
-                   })()
-        }
-            items
-            }
-            items
+        <div style={{ marginTop: 10 }}>
+  <strong>Medication Count</strong>
+
+  <br />
+
+  {(() => {
+    const meds =
+      typeof p.medications === "string"
+        ? JSON.parse(p.medications)
+        : p.medications || [];
+
+    return meds.length;
+  })()}{" "}
+  items
+
+</div>
           </div>
           
           <div>
@@ -581,11 +586,10 @@ textAlign:"center"
         
         <div 
           style={{marginBottom:15}}>{(
-          typeof selectedPrescription.medications==="string"?
-          JSON.parse(selectedPrescription.medications):
-            selectedPrescription.medications)
-            ?
-            .map((med,index)=>(
+  typeof selectedPrescription.medications === "string"
+    ? JSON.parse(selectedPrescription.medications)
+    : selectedPrescription.medications || []
+).map((med, index) => (
               <div
                  key={index}
                 style={
@@ -638,8 +642,7 @@ textAlign:"center"
         </button>
       </div>
       
-      <div
-      key={p.id}
+      
       style={{
       ...card,
       border:"2px solid green"
@@ -670,16 +673,48 @@ textAlign:"center"
     
   )}
             )}
-<hr style={{ margin: "30px 0" }} 
-  />
-  <h2>Ready For Collection</h2>
-{readyPrescriptions.length === 0 ? 
-  (
-    <div style={messageInfo}> No medication ready for collection
+<hr style={{ margin: "30px 0" }} />
+
+<h2>Ready For Collection</h2>
+
+{readyPrescriptions.length === 0 ? (
+
+  <div style={messageInfo}>
+    No medication ready for collection
+  </div>
+
+) : (
+
+  readyPrescriptions.map(p => (
+
+    <div
+      key={p.id}
+      style={{
+        ...card,
+        border: "2px solid green"
+      }}
+    >
+
+      <strong>{p.patient?.full_name}</strong>
+
+      <div>{p.patient?.id_number}</div>
+
+      <div style={{ marginTop: 10 }}>
+        {formatMedications(p.medications)}
+      </div>
+
+      <button
+        style={{
+          ...buttonPrimary,
+          marginTop: 15
+        }}
+        onClick={() => confirmCollection(p)}
+      >
+        Hand To Patient
+      </button>
+
     </div>
-  ) 
-  : 
-  (readyPrescriptions.map(p => (
-    </div>
-      );
-      }
+
+  ))
+
+)}
