@@ -32,7 +32,7 @@ export default function Pharmacy() {
   const [error, setError] = useState(null);
   const [profile, setProfile] = useState(null);
   const [readyPrescriptions, setReadyPrescriptions] = useState([]);
-
+  const [search, setSearch] = useState("");
 
   async function loadProfile() {
 
@@ -173,7 +173,20 @@ export default function Pharmacy() {
 
   }
 
+  const filteredPrescriptions = prescriptions.filter(p => {
 
+  const patientName =
+    p.patient?.full_name?.toLowerCase() || "";
+
+  const idNumber =
+    p.patient?.id_number || "";
+
+  return (
+    patientName.includes(search.toLowerCase()) ||
+    idNumber.includes(search)
+  );
+
+});
 
   async function billingExists(prescriptionId) {
 
@@ -413,6 +426,108 @@ async function confirmCollection(prescription) {
         Pharmacy Queue
       </h1>
 
+      <div
+
+style={{
+
+display:"flex",
+
+gap:"15px",
+
+marginBottom:"20px"
+
+}}
+
+>
+
+<div
+
+style={{
+
+...card,
+
+flex:1,
+
+textAlign:"center"
+
+}}
+
+>
+
+<h3>
+
+Pending
+
+</h3>
+
+<h2>
+
+{prescriptions.length}
+
+</h2>
+
+</div>
+
+<div
+
+style={{
+
+...card,
+
+flex:1,
+
+textAlign:"center"
+
+}}
+
+>
+
+<h3>
+
+Ready
+
+</h3>
+
+<h2>
+
+{readyPrescriptions.length}
+
+</h2>
+
+</div>
+
+</div>
+      
+      <input
+
+type="text"
+
+placeholder="Search patient name or ID..."
+
+value={search}
+
+onChange={(e)=>
+
+setSearch(e.target.value)
+
+}
+
+style={{
+
+width:"100%",
+
+padding:"12px",
+
+marginBottom:"20px",
+
+borderRadius:"8px",
+
+border:"1px solid #ccc"
+
+}}
+
+/>
+
       {error &&
         <div style={messageError}>
           {error}
@@ -427,7 +542,7 @@ async function confirmCollection(prescription) {
 
       }
       
-      {prescriptions.map(p => (
+      {filteredPrescriptions.map(p => (
 
         <div
           key={p.id}
@@ -452,11 +567,28 @@ async function confirmCollection(prescription) {
             
           </div>
 
-          <div>
-            Medications:
-            {" "}
-            {formatMedications(p.medications)}
-          </div>
+          <div style={{marginTop:10}}>
+          <strong> Medication Count</strong>
+
+        <br/>
+
+        {
+
+Array.isArray(p.medications)
+
+?
+
+p.medications.length
+
+:
+
+"Available"
+
+}
+
+items
+
+</div>
 
           <div>
             Created:
@@ -505,11 +637,67 @@ async function confirmCollection(prescription) {
               <strong>Medication List:</strong>
               </p>
 
-              <div style={{ marginBottom: 10 }}>
-              {formatMedications(
-              selectedPrescription.medications
-             )}
-           </div>
+              <div style={{marginBottom:15}}>
+
+               {(
+
+                 typeof selectedPrescription.medications==="string"?
+
+                 JSON.parse(selectedPrescription.medications):
+
+                 selectedPrescription.medications
+
+                 )?.map((med,index)=>(
+
+               <div
+
+               key={index}
+
+style={{
+
+border:"1px solid #ddd",
+
+padding:"10px",
+
+marginBottom:"10px",
+
+borderRadius:"8px"
+
+}}
+
+>
+
+<div>
+
+<strong>
+
+{med.name}
+
+</strong>
+
+</div>
+
+<div>
+
+Dosage:
+
+{med.dosage}
+
+</div>
+
+<div>
+
+Frequency:
+
+{med.frequency}
+
+</div>
+
+</div>
+
+))}
+
+</div>
 
            <p>
       <strong>Doctor Notes:</strong>
@@ -533,53 +721,7 @@ async function confirmCollection(prescription) {
          : "Prepare Medication"}
         </button>
 
-                <h2 style={{ marginTop: 30 }}>
-  Ready For Collection
-</h2>
-
-{readyPrescriptions.length === 0 ? (
-
-  <div style={messageInfo}>
-    No medication waiting for collection
-  </div>
-
-) : (
-
-  readyPrescriptions.map(p => (
-
-    <div
-      key={p.id}
-      style={{
-        ...card,
-        border: "2px solid green"
-      }}
-    >
-
-      <strong>
-        {p.patient?.full_name}
-      </strong>
-
-      <div>
-        {p.patient?.id_number}
-      </div>
-
-      <div>
-        {formatMedications(p.medications)}
-      </div>
-
-      <button
-        style={buttonPrimary}
-        onClick={() => confirmCollection(p)}
-      >
-        Hand To Patient
-      </button>
-
-    </div>
-
-  ))
-
-)}
-                
+                               
         <button
         style={{
                 marginLeft: 10
@@ -592,7 +734,71 @@ async function confirmCollection(prescription) {
                </button>
 
               </div>
+      
+       <hr style={{ margin: "30px 0" }} />
 
+        <h2>Ready For Collection</h2>
+
+       {readyPrescriptions.length === 0 ? (
+
+       <div style={messageInfo}>
+       No medication ready for collection
+       </div>
+
+        ) : (
+
+readyPrescriptions.map(p => (
+
+<div
+key={p.id}
+style={{
+...card,
+border:"2px solid green"
+}}
+>
+
+<strong>
+
+{p.patient?.full_name}
+
+</strong>
+
+<div>
+
+{p.patient?.id_number}
+
+</div>
+
+<div style={{marginTop:10}}>
+
+{formatMedications(p.medications)}
+
+</div>
+
+<button
+
+style={{
+...buttonPrimary,
+marginTop:15
+}}
+
+onClick={()=>
+
+confirmCollection(p)
+
+}
+
+>
+
+Hand To Patient
+
+</button>
+
+</div>
+
+))
+
+)}
             )}
 
 
