@@ -297,39 +297,29 @@ export default function Pharmacy() {
 
   async function loadReadyPrescriptions() {
 
-    
-      const { data, error } =
-        await supabase
-         .from("prescriptions")
-          .select(`
-            *,
-            patient:patients(*)
-        `  )
-          .eq(
-            "practice_id",
-            profile.practice_id
-          )
-          .eq(
-            "status",
-            PrescriptionStatus.READY_FOR_COLLECTION
-          );
+  if (!profile?.practice_id) return;
 
-    try {
+  try {
 
-      if (!profile?.practice_id) return;
+    const { data, error } = await supabase
+      .from("prescriptions")
+      .select(`
+        *,
+        patient:patients(*)
+      `)
+      .eq("practice_id", profile.practice_id)
+      .eq(
+        "status",
+        PrescriptionStatus.READY_FOR_COLLECTION
+      );
 
+    if (error) throw error;
 
-      if (error) throw error;
+    setReadyPrescriptions(data || []);
 
-      setReadyPrescriptions(data || []);
-
-    }
-    catch (err) {
-
-      console.error(err);
-
-    }
-
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 async function confirmCollection(prescription) {
@@ -346,6 +336,17 @@ async function confirmCollection(prescription) {
       dispensed_at: new Date().toISOString()
     }
   );
+
+  await globalInsert("audit_logs", {
+
+  practice_id: profile.practice_id,
+  actor_id: user.id,
+  action: "MEDICATION_COLLECTED",
+  entity: "prescription",
+  entity_id: prescription.id,
+  created_at: new Date().toISOString()
+
+});
 
   await globalUpdate(
     "visits",
@@ -368,10 +369,12 @@ async function confirmCollection(prescription) {
 
   useEffect(() => {
 
-    if (!profile)
-      loadPrescriptions();
-      loadReadyPrescriptions();
-  }, [profile]);
+  if (!profile) return;
+
+  loadPrescriptions();
+  loadReadyPrescriptions();
+
+}, [profile]);
 
 
 
@@ -380,10 +383,10 @@ async function confirmCollection(prescription) {
     if (!profile) return;
 
     const interval =
-      setInterval(
-        loadPrescriptions,
-        5000
-      );
+      setInterval(() => {
+      loadPrescriptions();
+      loadReadyPrescriptions();
+     }, 60000);
 
     return () =>
       clearInterval(interval);
@@ -530,6 +533,53 @@ async function confirmCollection(prescription) {
          : "Prepare Medication"}
         </button>
 
+                <h2 style={{ marginTop: 30 }}>
+  Ready For Collection
+</h2>
+
+{readyPrescriptions.length === 0 ? (
+
+  <div style={messageInfo}>
+    No medication waiting for collection
+  </div>
+
+) : (
+
+  readyPrescriptions.map(p => (
+
+    <div
+      key={p.id}
+      style={{
+        ...card,
+        border: "2px solid green"
+      }}
+    >
+
+      <strong>
+        {p.patient?.full_name}
+      </strong>
+
+      <div>
+        {p.patient?.id_number}
+      </div>
+
+      <div>
+        {formatMedications(p.medications)}
+      </div>
+
+      <button
+        style={buttonPrimary}
+        onClick={() => confirmCollection(p)}
+      >
+        Hand To Patient
+      </button>
+
+    </div>
+
+  ))
+
+)}
+                
         <button
         style={{
                 marginLeft: 10
