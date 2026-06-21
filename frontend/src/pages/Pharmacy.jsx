@@ -422,9 +422,7 @@ async function confirmCollection(prescription) {
 
     <div style={container}>
 
-      <h1 style={header}>
-        Pharmacy Queue
-      </h1>
+      <h1 style={header}> Pharmacy Queue </h1>
 
       <div
 
@@ -454,90 +452,47 @@ textAlign:"center"
 
 >
 
-<h3>
+<h3> Pending </h3>
 
-Pending
-
-</h3>
-
-<h2>
-
-{prescriptions.length}
-
-</h2>
+<h2> {prescriptions.length} </h2>
 
 </div>
 
 <div
-
-style={{
-
-...card,
-
-flex:1,
-
-textAlign:"center"
-
+  style={{
+    ...card,
+    flex:1,
+    textAlign:"center"
 }}
-
->
-
-<h3>
-
-Ready
-
-</h3>
-
-<h2>
-
-{readyPrescriptions.length}
-
-</h2>
-
+  >
+  <h3>Ready</h3>
+  <h2>{readyPrescriptions.length}</h2>
 </div>
-
-</div>
+      </div>
       
       <input
+        type="text"
+        placeholder="Search patient name or ID..."
+        value={search}
+        onChange={(e)=>setSearch(e.target.value)}
+        
+        style={{
+          width:"100%",
+          padding:"12px",
+          marginBottom:"20px",
+          borderRadius:"8px",
+          border:"1px solid #ccc"
+        }}
+        />
 
-type="text"
-
-placeholder="Search patient name or ID..."
-
-value={search}
-
-onChange={(e)=>
-
-setSearch(e.target.value)
-
-}
-
-style={{
-
-width:"100%",
-
-padding:"12px",
-
-marginBottom:"20px",
-
-borderRadius:"8px",
-
-border:"1px solid #ccc"
-
-}}
-
-/>
-
-      {error &&
-        <div style={messageError}>
-          {error}
+      {error && <div style={messageError}> {error}
         </div>
       }
 
       {prescriptions.length === 0 &&
 
-        <div style={messageInfo}>
-          No prescriptions pending
+        <div 
+          style={messageInfo}> No prescriptions pending
         </div>
 
       }
@@ -573,23 +528,17 @@ border:"1px solid #ccc"
         <br/>
 
         {
-
-Array.isArray(p.medications)
-
-?
-
-p.medications.length
-
-:
-
-"Available"
-
-}
-
-items
-
-</div>
-
+          {
+            (() => {const meds = typeof p.medications === "string"
+              ? JSON.parse(p.medications) : p.medications || [];
+                    return meds.length;
+                   })()
+        }
+            items
+            }
+            items
+          </div>
+          
           <div>
             Created:
             {" "}
@@ -603,207 +552,134 @@ items
               ...buttonPrimary,
               marginTop: 10
              }}
-             onClick={() => setSelectedPrescription(p)} 
-             >
-           View Prescription
+             onClick={() => setSelectedPrescription(p)}> View Prescription
            </button>
         </div>
-
-      ))}
-
+    ))}
+      
       {selectedPrescription && (
-
-              <div
-               style={{
-               ...card,
-               marginTop: 20,
-               border: "2px solid #2563eb"
-              }}
-              >
-
-              <h3>Prescription Details</h3>
-
-               <p>
-               <strong>Patient:</strong>{" "}
-              {selectedPrescription.patient?.full_name}
-              </p>
-
-              <p>
-              <strong>ID Number:</strong>{" "}
-              {selectedPrescription.patient?.id_number}
-              </p>
-
-               <p>
-              <strong>Medication List:</strong>
-              </p>
-
-              <div style={{marginBottom:15}}>
-
-               {(
-
-                 typeof selectedPrescription.medications==="string"?
-
-                 JSON.parse(selectedPrescription.medications):
-
-                 selectedPrescription.medications
-
-                 )?.map((med,index)=>(
-
-               <div
-
-               key={index}
-
-style={{
-
-border:"1px solid #ddd",
-
-padding:"10px",
-
-marginBottom:"10px",
-
-borderRadius:"8px"
-
-}}
-
->
-
-<div>
-
-<strong>
-
-{med.name}
-
-</strong>
-
-</div>
-
-<div>
-
-Dosage:
-
-{med.dosage}
-
-</div>
-
-<div>
-
-Frequency:
-
-{med.frequency}
-
-</div>
-
-</div>
-
-))}
-
-</div>
-
-           <p>
-      <strong>Doctor Notes:</strong>
-    </p>
-
-    <div style={{ marginBottom: 15 }}>
-      {selectedPrescription.pharmacist_note || "None"}
-    </div>
-
-     <button
-        style={buttonPrimary}
-        onClick={() =>
-        prepareMedication(selectedPrescription)
-      }
-        disabled={
-        dispensingId === selectedPrescription.id
-       }
+      <div
+        style={
+          {
+            ...card,marginTop: 20,
+            border: "2px solid #2563eb"
+          }
+        }
         >
-        {dispensingId === selectedPrescription.id
-         ? "Preparing..."
-         : "Prepare Medication"}
+        <h3>Prescription Details</h3>
+        <p>
+          <strong>Patient:</strong>{" "}
+          {selectedPrescription.patient?.full_name}
+        </p>
+        
+        <p>
+          <strong>ID Number:</strong>{" "}
+          {selectedPrescription.patient?.id_number}
+        </p>
+        
+        <p> <strong>Medication List:</strong> </p>
+        
+        <div 
+          style={{marginBottom:15}}>{(
+          typeof selectedPrescription.medications==="string"?
+          JSON.parse(selectedPrescription.medications):
+            selectedPrescription.medications)
+            ?
+            .map((med,index)=>(
+              <div
+                 key={index}
+                style={
+                  {border:"1px solid #ddd",
+                   padding:"10px",
+                   marginBottom:"10px",
+                   borderRadius:"8px"
+                  }}
+                >
+                <div>
+                   <strong>
+                     {med.name}
+                   </strong>
+                 </div>
+                 
+                 <div>
+                   Dosage: {med.dosage}
+                 </div>
+                 
+                 <div>
+                   Frequency: {med.frequency}
+                 </div>
+               </div>
+                 ))
+               }
+        </div>
+        
+        <p> <strong>Doctor Notes:</strong> </p>
+        
+        <div style={{ marginBottom: 15 }}> {selectedPrescription.pharmacist_note || "None"}
+        </div>
+        
+        <button
+          style={buttonPrimary}
+          onClick={() => prepareMedication(selectedPrescription)
+          }
+          disabled={dispensingId === selectedPrescription.id}
+        >
+          {dispensingId === selectedPrescription.id
+            ? 
+          "Preparing...": "Prepare Medication"}
         </button>
-
-                               
+        
+        <button
+          style={{marginLeft: 10}}
+              onClick={() => setSelectedPrescription(null)
+              }
+          >
+          Close
+        </button>
+      </div>
+      
+      <div
+      key={p.id}
+      style={{
+      ...card,
+      border:"2px solid green"
+    }}
+      >
+      <strong>
+        {p.patient?.full_name}
+      </strong>
+      
+      <div>
+        {p.patient?.id_number}
+      </div>
+      
+      <div style={{marginTop:10}}> {formatMedications(p.medications)
+        </div>
+        
         <button
         style={{
-                marginLeft: 10
-               }}
-              onClick={() =>
-              setSelectedPrescription(null)
-                }
-                >
-               Close
-               </button>
-
-              </div>
-      
-       <hr style={{ margin: "30px 0" }} />
-
-        <h2>Ready For Collection</h2>
-
-       {readyPrescriptions.length === 0 ? (
-
-       <div style={messageInfo}>
-       No medication ready for collection
-       </div>
-
-        ) : (
-
-readyPrescriptions.map(p => (
-
-<div
-key={p.id}
-style={{
-...card,
-border:"2px solid green"
-}}
->
-
-<strong>
-
-{p.patient?.full_name}
-
-</strong>
-
-<div>
-
-{p.patient?.id_number}
-
-</div>
-
-<div style={{marginTop:10}}>
-
-{formatMedications(p.medications)}
-
-</div>
-
-<button
-
-style={{
-...buttonPrimary,
-marginTop:15
-}}
-
-onClick={()=>
-
-confirmCollection(p)
-
-}
-
->
-
-Hand To Patient
-
-</button>
-
-</div>
-
-))
-
-)}
-            )}
-
-
+      ...buttonPrimary,
+      marginTop:15
+    }}
+        onClick={()=> confirmCollection(p)}
+        >
+        Hand To Patient
+      </button>
     </div>
-
-  );
-
-}
+  ))
+    
+  )}
+            )}
+<hr style={{ margin: "30px 0" }} 
+  />
+  <h2>Ready For Collection</h2>
+{readyPrescriptions.length === 0 ? 
+  (
+    <div style={messageInfo}> No medication ready for collection
+    </div>
+  ) 
+  : 
+  (readyPrescriptions.map(p => (
+    </div>
+      );
+      }
