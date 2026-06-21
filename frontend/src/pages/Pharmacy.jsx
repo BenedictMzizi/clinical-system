@@ -297,10 +297,7 @@ export default function Pharmacy() {
 
   async function loadReadyPrescriptions() {
 
-    try {
-
-      if (!profile?.practice_id) return;
-
+    
       const { data, error } =
         await supabase
          .from("prescriptions")
@@ -316,6 +313,11 @@ export default function Pharmacy() {
             "status",
             PrescriptionStatus.READY_FOR_COLLECTION
           );
+
+    try {
+
+      if (!profile?.practice_id) return;
+
 
       if (error) throw error;
 
