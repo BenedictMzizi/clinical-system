@@ -712,7 +712,7 @@ textAlign:"center"
                 </button>
 
                  </div>
-))}
+))
 
 )}
 
