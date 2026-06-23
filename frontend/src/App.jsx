@@ -11,6 +11,7 @@ import DoctorConsultation from "./pages/DoctorConsultation";
 import Pharmacy from "./pages/Pharmacy";
 import ITAdmin from "./pages/ITAdmin";
 import Vitals from "./pages/Vitals";
+import Billing from "./pages/Billing";
 
 export default function App() {
   return (
@@ -86,6 +87,18 @@ export default function App() {
           <ProtectedRoute allowedRoles={["admin", "nurse"]}>
             <Layout>
               <Vitals/>
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Billing */}
+      <Route
+        path="/billing"
+        element={
+          <ProtectedRoute allowedRoles={["admin", "cashier"]}>
+            <Layout>
+              <Reception />
             </Layout>
           </ProtectedRoute>
         }
