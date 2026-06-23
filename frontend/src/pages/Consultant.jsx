@@ -299,7 +299,7 @@ if (validMedications.length > 0)
 
        prescription_number: prescriptionNumber,
 
-       pharmacist_note: pharmacy_note?.trim() || null
+       pharmacist_note: pharmacy_note?.trim() || null, 
 
        status: PrescriptionStatus.PENDING,
 
