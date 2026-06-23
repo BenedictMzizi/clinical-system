@@ -3,7 +3,7 @@ import { Navigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
 
-export default function ProtectedRoute({
+export default function Billing({
 
   children,
   allowedRoles = []
