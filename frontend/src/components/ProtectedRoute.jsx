@@ -42,7 +42,10 @@ if (profileError) {
   return;
 }
 
-console.log("Profile:", profile);
+      console.log("Profile:", profile);
+      console.log("User ID:", user.id);
+      console.log("Allowed Roles:", allowedRoles);
+      console.log("Role:", profile?.role);
 
 if (profile?.is_active) {
   setRole(profile.role);
