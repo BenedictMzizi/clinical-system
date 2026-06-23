@@ -28,6 +28,8 @@ export default function Login() {
         return "/consultant";
       case "pharmacist":
         return "/pharmacy";
+      case "cashier":
+        return "billing";
       case "it":
         return "/it-admin";
       case "admin":
@@ -125,6 +127,7 @@ const demoAccounts = [
   { role: "Nurse", email: "nurse@test.com" },
   { role: "Consultant", email: "doctor@test.com" },
   { role: "Pharmacist", email: "pharmacy@test.com" },
+  { role: "Cashier", email: "cashier@test.com" },
 ];
 
 function useDemoAccount(email) {
