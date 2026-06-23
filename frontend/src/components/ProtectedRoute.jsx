@@ -29,12 +29,24 @@ export default function ProtectedRoute({
 
       setUser(user);
 
-      const { data: profile } =
-        await supabase
-          .from("profiles")
-          .select("role,is_active")
-          .eq("id", user.id)
-          .single();
+      const { data: profile, error: profileError } =
+  await supabase
+    .from("profiles")
+    .select("role,is_active")
+    .eq("id", user.id)
+    .maybeSingle();
+
+if (profileError) {
+  console.error("Profile Error:", profileError);
+  setLoading(false);
+  return;
+}
+
+console.log("Profile:", profile);
+
+if (profile?.is_active) {
+  setRole(profile.role);
+}
 
       if (profile?.is_active)
         setRole(profile.role);
