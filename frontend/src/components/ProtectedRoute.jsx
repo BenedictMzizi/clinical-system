@@ -1,51 +1,80 @@
-
 import React, { useEffect, useState } from "react";
-import { globalSelect, globalUpdate } from "../lib/globalDataLayer";
-import { container, header, card, buttonPrimary, messageError } from "../styles/styles";
+import { Navigate } from "react-router-dom";
+import { supabase } from "../lib/supabase";
 
-export default function Billing() {
-  const [claims, setClaims] = useState([]);
+
+export default function ProtectedRoute({
+
+  children,
+  allowedRoles = []
+
+}) {
+
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const [role, setRole] = useState(null);
 
   useEffect(() => {
-    loadClaims();
+
+    async function checkAuth() {
+
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      setUser(user);
+
+      const { data: profile, error: profileError } =
+  await supabase
+    .from("profiles")
+    .select("role,is_active")
+    .eq("id", user.id)
+    .maybeSingle();
+
+if (profileError) {
+  console.error("Profile Error:", profileError);
+  setLoading(false);
+  return;
+}
+
+console.log("Profile:", profile);
+
+if (profile?.is_active) {
+  setRole(profile.role);
+    }
+
+      setLoading(false);
+    }
+
+    checkAuth();
+
   }, []);
 
-  async function loadClaims() {
-    const data = await globalSelect("medical_aid_claims", (query) =>
-      query.select(`*, visit:visits(patient:patients(full_name))`)
+  if (loading)
+    return (
+      <div style={{ padding: 20 }}>
+        Checking authentication...
+      </div>
     );
 
-    setClaims(data || []);
-    setLoading(false);
-  }
+  if (!user)
+    return <Navigate to="/login" replace />;
 
-  async function submitClaim(claim) {
-    try {
-      await globalUpdate("medical_aid_claims", { id: claim.id }, {
-        status: "submitted",
-        submitted_at: new Date().toISOString(),
-      });
-      loadClaims();
-    } catch (err) {
-      console.error(err);
-    }
-  }
+  if (
+    allowedRoles.length > 0 &&
+    !allowedRoles.includes(role)
+  )
+    return (
+      <div style={{ padding: 20 }}>
+        Access denied: insufficient permissions
+      </div>
+    );
 
-  if (loading) return <div>Loading billing...</div>;
+  return children;
 
-  return (
-    <div style={container}>
-      <h2 style={header}>Billing</h2>
-      {claims.length === 0 && <div>No claims found.</div>}
-      {claims.map((claim) => (
-        <div key={claim.id} style={card}>
-          {claim.visit?.patient?.full_name}
-          <button style={buttonPrimary} onClick={() => submitClaim(claim)}>
-            Submit
-          </button>
-        </div>
-      ))}
-    </div>
-  );
 }
