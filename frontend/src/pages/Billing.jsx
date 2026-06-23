@@ -3,6 +3,16 @@ import { Navigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
 
+import {
+  globalUpdate,
+  globalInsert
+} from "../lib/globalDataLayer";
+
+import { RealtimeEngine } from "../lib/realtimeEngine";
+
+import { VisitStatus } from "../constants/visitStatus";
+import { PrescriptionStatus } from "../constants/prescriptionStatus";
+
 export default function Billing({
 
   children,
