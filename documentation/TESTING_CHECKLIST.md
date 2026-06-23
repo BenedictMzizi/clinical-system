@@ -1,4 +1,4 @@
-# 🧪 Clinic Management System (CMS)
+#  Hospital Management System (HWMS)
 ## System Testing Checklist
 
 Version: 1.0
