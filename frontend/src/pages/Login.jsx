@@ -127,7 +127,7 @@ const demoAccounts = [
   { role: "Nurse", email: "nurse@test.com" },
   { role: "Consultant", email: "doctor@test.com" },
   { role: "Pharmacist", email: "pharmacy@test.com" },
-  { role: "Cashier", email: "cashier@test.com" },
+  { role: "Cashier", email: "billing@test.com" },
 ];
 
 function useDemoAccount(email) {
