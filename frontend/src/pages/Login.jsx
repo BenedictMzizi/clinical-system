@@ -30,7 +30,7 @@ export default function Login() {
         return "/pharmacy";
       case "cashier":
         return "billing";
-        case "cashier":
+      case "billing":
         return "billing";
       case "it":
         return "/it-admin";
