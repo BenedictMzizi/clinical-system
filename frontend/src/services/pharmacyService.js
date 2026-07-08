@@ -1,11 +1,14 @@
 import { supabase } from "../lib/supabase";
-
-import {
-  globalSelect
-} from "../lib/globalDataLayer";
-
+import { VisitStatus } from "../constants/visitStatus";
 import { PrescriptionStatus } from "../constants/prescriptionStatus";
 import { BillingStatus } from "../constants/billingStatus";
+
+
+import {
+  globalInsert,
+  global Update, 
+  globalSelect
+} from "../lib/globalDataLayer";
 
 
 export async function loadProfile() {
@@ -173,10 +176,6 @@ export async function getCurrentUser() {
   return user;
 
 }
-import {
-  globalInsert,
-  globalUpdate
-} from "../lib/globalDataLayer";
 
 async function createBilling(
   prescription,
@@ -252,7 +251,6 @@ async function markPrescriptionPrepared(
   );
 
 }
-
 
 
 async function createAuditLog({
@@ -340,7 +338,6 @@ export async function prepareMedicationService(
   );
 
 
-
   await markPrescriptionPrepared(
 
     prescription.id,
@@ -371,3 +368,156 @@ export async function prepareMedicationService(
   });
 
 }
+
+
+async function markPrescriptionDispensed(
+  prescriptionId,
+  userId
+) {
+
+  const now = new Date().toISOString();
+
+  await globalUpdate(
+    "prescriptions",
+    { id: prescriptionId },
+    {
+      status: PrescriptionStatus.DISPENSED,
+      dispensed_by: userId,
+      dispensed_at: now,
+      updated_by: userId,
+      updated_at: now
+    }
+  );
+
+}
+
+
+
+
+async function closeVisit(
+  visitId
+) {
+
+  await globalUpdate(
+    "visits",
+    { id: visitId },
+    {
+      status: VisitStatus.CLOSED,
+      updated_at: new Date().toISOString()
+    }
+  );
+
+}
+
+
+
+
+
+export async function confirmCollectionService(
+
+  prescription,
+
+  profile
+
+) {
+
+  const user =
+    await getCurrentUser();
+
+
+
+  await markPrescriptionDispensed(
+
+    prescription.id,
+
+    user.id
+
+  );
+
+
+
+  await createAuditLog({
+
+    practiceId:
+      profile.practice_id,
+
+    actorId:
+      user.id,
+
+    action:
+      "MEDICATION_COLLECTED",
+
+    entity:
+      "prescription",
+
+    entityId:
+      prescription.id
+
+  });
+
+
+
+  await closeVisit(
+
+    prescription.visit_id
+
+  );
+
+}
+
+
+
+export function parseMedications(
+  medications
+) {
+
+  if (!medications)
+    return [];
+
+  if (Array.isArray(medications))
+    return medications;
+
+  try {
+
+    return JSON.parse(medications);
+
+  } catch {
+
+    return [];
+
+  }
+
+}
+
+
+
+
+export function formatMedications(
+  medications
+) {
+
+  const meds =
+    parseMedications(
+      medications
+    );
+
+  return meds
+    .map(m =>
+      `${m.name || ""} ${m.dosage || ""} ${m.frequency || ""}`.trim()
+    )
+    .join(", ");
+
+}
+
+
+
+
+export function medicationCount(
+  medications
+) {
+
+  return parseMedications(
+    medications
+  ).length;
+
+      }
