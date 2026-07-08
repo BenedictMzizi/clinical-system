@@ -41,13 +41,27 @@ export default function PrescriptionModal({
     return (
 
         <div
-            style={{
-                ...card,
-                marginTop: 25,
-                border: "2px solid #2563eb",
-                borderRadius: 10
-            }}
-        >
+    style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.45)",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        zIndex: 1000
+    }}
+>
+
+    <div
+        style={{
+            ...card,
+            width: "90%",
+            maxWidth: "800px",
+            maxHeight: "90vh",
+            overflowY: "auto",
+            borderRadius: 10
+        }}
+    >
 
             <h2>
 
