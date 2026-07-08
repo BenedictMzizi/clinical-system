@@ -3,7 +3,7 @@ SELECT
   br.id                AS billing_id,
   v.id                 AS visit_id,
 
-  -- ✅ FIXED
+  --
   p.full_name          AS patient_name,
 
   br.medical_aid_name,
