@@ -1,4 +1,3 @@
--- Auto-unlock visits stuck in consultation for more than 60 minutes
 CREATE OR REPLACE FUNCTION auto_unlock_stale_visits()
 RETURNS void AS $$
 BEGIN
