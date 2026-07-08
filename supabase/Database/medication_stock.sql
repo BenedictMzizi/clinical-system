@@ -13,12 +13,12 @@ CREATE OR REPLACE FUNCTION dispense_medication(
 )
 RETURNS void AS $$
 BEGIN
-  -- Check stock
+  -
   IF (SELECT stock FROM medications WHERE name = p_medication) < p_quantity THEN
     RAISE EXCEPTION 'Insufficient stock';
   END IF;
 
-  -- Deduct stock
+  
   UPDATE medications
   SET stock = stock - p_quantity
   WHERE name = p_medication;
