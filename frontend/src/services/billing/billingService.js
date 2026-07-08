@@ -1,4 +1,4 @@
-E3 import { supabase } from "../../lib/supabase";
+import { supabase } from "../../lib/supabase";
 
 import {
   globalInsert,
@@ -742,7 +742,37 @@ export async function deleteBill(
 }
 
 
+export async function calculateMedicationBill(
 
+    prescription,
+
+    practiceId
+
+){
+
+    const medications =
+
+        parseMedications(
+
+            prescription.medications
+
+        );
+
+    const medicationPrice =
+
+        await getServicePrice(
+
+            practiceId,
+
+            "MEDICATION_ITEM"
+
+        );
+
+    return medications.length *
+
+        medicationPrice;
+
+}
 /* ======================================================
    VALIDATE BILL
 ====================================================== */
