@@ -1,4 +1,4 @@
--- AFTER creating auth users manually
+
 INSERT INTO profiles (id,email,role)
 VALUES
 (auth.uid(),'admin@test.com','admin');
