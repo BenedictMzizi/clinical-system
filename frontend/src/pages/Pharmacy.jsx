@@ -62,6 +62,20 @@ export default function Pharmacy() {
     }
 
   }
+  
+  function parseMedications(medications) 
+  {
+   if (!medications) return [];
+
+   if (Array.isArray(medications))
+    return medications;
+
+   try {
+    return JSON.parse(medications);
+  } catch {
+    return [];
+  }
+}
 
 
 
@@ -93,15 +107,11 @@ export default function Pharmacy() {
   }
 
 
-
   function calculateBilling(prescription) {
 
     try {
 
-      const meds =
-        typeof prescription.medications === "string"
-          ? JSON.parse(prescription.medications)
-          : prescription.medications || [];
+      const meds = parseMedications(p.medications);
 
       let total = meds.length * 10;
 
@@ -118,8 +128,6 @@ export default function Pharmacy() {
     }
 
   }
-
-
 
   async function loadPrescriptions() {
 
@@ -530,10 +538,7 @@ textAlign:"center"
 
   try {
 
-    const meds =
-      typeof p.medications === "string"
-        ? JSON.parse(p.medications)
-        : p.medications || [];
+    const meds = parseMedications(p.medications);
 
     return meds.length;
 
@@ -663,13 +668,7 @@ textAlign:"center"
           Close
         </button>
       </div>
-      
-                   
-
-  
-       
-
-        </>
+     </>
 )}
       <hr style={{ margin: "30px 0" }} />
 
