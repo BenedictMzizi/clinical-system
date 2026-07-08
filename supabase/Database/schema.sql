@@ -1,18 +1,9 @@
--- =====================================================
--- EXTENSIONS
--- =====================================================
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- =====================================================
--- ENUMS
--- =====================================================
 CREATE TYPE visit_status AS ENUM ('OPEN', 'CLOSED');
 CREATE TYPE billing_type AS ENUM ('cash', 'medical_aid', 'state');
 CREATE TYPE prescription_status AS ENUM ('PENDING', 'DISPENSED');
 
--- =====================================================
--- PROFILES (Supabase auth users)
--- =====================================================
 CREATE TABLE profiles (
   id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   full_name text,
@@ -21,9 +12,6 @@ CREATE TABLE profiles (
   created_at timestamptz DEFAULT now()
 );
 
--- =====================================================
--- PRACTICES
--- =====================================================
 CREATE TABLE practices (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name text NOT NULL,
@@ -31,9 +19,6 @@ CREATE TABLE practices (
   created_at timestamptz DEFAULT now()
 );
 
--- =====================================================
--- PATIENTS
--- =====================================================
 CREATE TABLE patients (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   first_name text NOT NULL,
@@ -43,9 +28,6 @@ CREATE TABLE patients (
   created_at timestamptz DEFAULT now()
 );
 
--- =====================================================
--- VISITS (central business entity)
--- =====================================================
 CREATE TABLE visits (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   patient_id uuid REFERENCES patients(id) ON DELETE CASCADE,
@@ -55,9 +37,6 @@ CREATE TABLE visits (
   created_at timestamptz DEFAULT now()
 );
 
--- =====================================================
--- CONSULTATIONS (1:1 with visit)
--- =====================================================
 CREATE TABLE consultations (
   visit_id uuid PRIMARY KEY REFERENCES visits(id) ON DELETE CASCADE,
   symptoms text,
