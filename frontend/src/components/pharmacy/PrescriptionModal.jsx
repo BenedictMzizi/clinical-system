@@ -1,7 +1,8 @@
 import React, { useMemo } from "react";
 
 import {
-    card
+    card, 
+    buttonPrimary 
 } from "../../styles/styles";
 
 import {
