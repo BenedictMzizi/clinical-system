@@ -1,722 +1,156 @@
-import React, { useEffect, useState } from "react";
-import { supabase } from "../lib/supabase";
-
-import { PrescriptionStatus } from "../constants/prescriptionStatus";
-import { BillingStatus } from "../constants/billingStatus";
-import { VisitStatus } from "../constants/visitStatus";
-
+import React from "react";
 
 import {
-  globalUpdate,
-  globalInsert,
-  globalSelect
-} from "../lib/globalDataLayer";
-
-import {
-  container,
-  header,
-  card,
-  buttonPrimary,
-  messageError,
-  messageInfo
+    container,
+    header,
+    messageError,
+    messageInfo
 } from "../styles/styles";
 
+import usePharmacy from "../hooks/usePharmacy";
+
+import DashboardCards from "../components/pharmacy/DashboardCards";
+import SearchBar from "../components/pharmacy/SearchBar";
+import PendingPrescriptionCard from "../components/pharmacy/PendingPrescriptionCard";
+import ReadyPrescriptionCard from "../components/pharmacy/ReadyPrescriptionCard";
+import PrescriptionModal from "../components/pharmacy/PrescriptionModal";
 
 export default function Pharmacy() {
-  
-  const [prescriptions, setPrescriptions] = useState([]);
-  const [selectedPrescription, setSelectedPrescription] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [dispensingId, setDispensingId] = useState(null);
-  const [error, setError] = useState(null);
-  const [profile, setProfile] = useState(null);
-  const [readyPrescriptions, setReadyPrescriptions] = useState([]);
-  const [search, setSearch] = useState("");
 
-  async function loadProfile() {
+    const {
 
-    try {
-      const { data: { user } } =
-        await supabase.auth.getUser();
+        loading,
+        error,
 
-      if (!user) throw new Error("Not authenticated");
+        search,
+        setSearch,
 
-      const profileData =
-        await globalSelect(
-          "profiles",
-          query =>
-            query
-              .select("*")
-              .eq("id", user.id)
-              .single()
-        );
+        filteredPrescriptions,
+        readyPrescriptions,
 
-      setProfile(profileData);
+        selectedPrescription,
+        setSelectedPrescription,
 
-    }
-    catch (err) {
+        dispensingId,
 
-      console.error(err);
-      setError("Failed to load profile");
+        prepareMedication,
+        confirmCollection
 
-    }
+    } = usePharmacy();
 
-  }
-  
-  function parseMedications(medications) 
-  {
-   if (!medications) return [];
 
-   if (Array.isArray(medications))
-    return medications;
+    if (loading)
+        return (
+            <div style={container}>
+                <h1 style={header}>Pharmacy Queue</h1>
 
-   try {
-    return JSON.parse(medications);
-  } catch {
-    return [];
-  }
-}
-
-
-
-  function formatMedications(medications) {
-
-    if (!medications) return "N/A";
-
-    let meds = medications;
-
-    if (typeof meds === "string") {
-      try {
-        meds = JSON.parse(meds);
-      }
-      catch {
-        return meds;
-      }
-    }
-
-    if (Array.isArray(meds)) {
-
-      return meds.map(m =>
-        `${m.name || ""} ${m.dosage || ""} ${m.frequency || ""}`.trim()
-      ).join(", ");
-
-    }
-
-    return "N/A";
-
-  }
-
-
-  function calculateBilling(prescription) {
-
-    try {
-
-      const meds = parseMedications(p.medications);
-
-      let total = meds.length * 10;
-
-      if (prescription.patient?.insurance === true)
-        total = 0;
-
-      return total;
-
-    }
-    catch {
-
-      return 0;
-
-    }
-
-  }
-
-  async function loadPrescriptions() {
-
-    setLoading(true);
-    setError(null);
-
-    try {
-
-      if (!profile?.practice_id) return;
-
-      const { data, error } =
-        await supabase
-          .from("prescriptions")
-          .select(`
-            id,
-            practice_id,
-            visit_id,
-            patient_id,
-            medications,
-            pharmacist_note,
-            status,
-            locked,
-            created_at,
-            patient:patients(
-              id,
-              full_name,
-              id_number,
-              insurance
-            )
-          `)
-          .eq("practice_id", profile.practice_id)
-          .eq("status", PrescriptionStatus.PENDING)
-          .eq("locked", false)
-          .order("created_at", { ascending: true });
-
-      if (error) throw error;
-
-      setPrescriptions(data || []);
-
-    }
-    catch (err) {
-
-      console.error(err);
-      setError("Failed to load prescriptions");
-
-    }
-
-    setLoading(false);
-
-  }
-
-  const filteredPrescriptions = prescriptions.filter(p => {
-
-  const patientName =
-    p.patient?.full_name?.toLowerCase() || "";
-
-  const idNumber =
-    p.patient?.id_number || "";
-
-  return (
-    patientName.includes(search.toLowerCase()) ||
-    idNumber.includes(search)
-  );
-
-});
-
-  async function billingExists(prescriptionId) {
-
-    const existing =
-      await globalSelect(
-        "billing",
-        query =>
-          query
-            .select("id")
-            .eq("prescription_id", prescriptionId)
-            .limit(1)
-      );
-
-    return existing?.length > 0;
-
-  }
-
-
-
-  async function prepareMedication(prescription) {
-
-    if (dispensingId) return;
-
-    setDispensingId(prescription.id);
-    setError(null);
-
-    try {
-
-
-      const { data: { user } } =
-        await supabase.auth.getUser();
-
-      if (!user)
-        throw new Error("Not authenticated");
-
-
-      if (prescription.locked)
-        throw new Error("Prescription locked");
-
-
-      const exists =
-        await billingExists(prescription.id);
-
-      if (exists)
-        throw new Error("Billing already exists");
-
-
-      const amount =
-        calculateBilling(prescription);
-
-
-      await globalInsert(
-        "billing",
-        {
-          practice_id: profile.practice_id,
-
-          prescription_id: prescription.id,
-          visit_id: prescription.visit_id,
-          patient_id: prescription.patient_id,
-
-          amount,
-
-          status:
-            amount > 0
-              ? BillingStatus.PENDING
-              : BillingStatus.PAIDCONSULTATION,
-
-          created_by: user.id,
-          created_at: new Date().toISOString()
-        }
-      );
-
-
-      await globalUpdate(
-      "prescriptions",
-       { id: prescription.id },
-        {
-          status: PrescriptionStatus.READY_FOR_COLLECTION,
-          locked: true,
-          prepared_by: user.id,
-          prepared_at: new Date().toISOString(),
-          updated_by: user.id
-         }
+                <div style={messageInfo}>
+                    Loading...
+                </div>
+            </div>
         );
 
 
-             await globalInsert(
-              "audit_logs",
-              {
-                practice_id: profile.practice_id,
-                actor_id: user.id,
-                action: "MEDICATION_PREPARED",
-                entity: "prescription",
-                entity_id: prescription.id,
-                created_at: new Date().toISOString()
-                }
-              );
-      
-           
-
-
-      await loadPrescriptions();
-      await loadReadyPrescriptions();
-      setSelectedPrescription(null);
-
-    }
-    catch (err) {
-
-      console.error(err);
-
-      setError(
-        err.message ||
-        "Dispense failed"
-      );
-
-    }
-
-    setDispensingId(null);
-
-  }
-
-  async function loadReadyPrescriptions() {
-
-  if (!profile?.practice_id) return;
-
-  try {
-
-    const { data, error } = await supabase
-      .from("prescriptions")
-      .select(`
-        *,
-        patient:patients(*)
-      `)
-      .eq("practice_id", profile.practice_id)
-      .eq(
-        "status",
-        PrescriptionStatus.READY_FOR_COLLECTION
-      );
-
-    if (error) throw error;
-
-    setReadyPrescriptions(data || []);
-
-  } catch (err) {
-    console.error(err);
-  }
-}
-
-async function confirmCollection(prescription) {
-
-  const { data: { user } } =
-    await supabase.auth.getUser();
-
-  await globalUpdate(
-    "prescriptions",
-    { id: prescription.id },
-    {
-      status: PrescriptionStatus.DISPENSED,
-      dispensed_by: user.id,
-      dispensed_at: new Date().toISOString()
-    }
-  );
-
-  await globalInsert("audit_logs", {
-
-  practice_id: profile.practice_id,
-  actor_id: user.id,
-  action: "MEDICATION_COLLECTED",
-  entity: "prescription",
-  entity_id: prescription.id,
-  created_at: new Date().toISOString()
-
-});
-
-  await globalUpdate(
-    "visits",
-    { id: prescription.visit_id },
-    {
-      status: VisitStatus.CLOSED,
-      updated_at: new Date().toISOString()
-    }
-  );
-
-  await loadReadyPrescriptions();
-  await loadPrescriptions();
-
-}
-  useEffect(() => {
-
-    loadProfile();
-
-  }, []);
-
-
-  useEffect(() => {
-
-  if (!profile) return;
-
-  loadPrescriptions();
-  loadReadyPrescriptions();
-
-}, [profile]);
-
-
-
-  useEffect(() => {
-
-    if (!profile) return;
-
-    const interval =
-      setInterval(() => {
-      loadPrescriptions();
-      loadReadyPrescriptions();
-     }, 60000);
-
-    return () =>
-      clearInterval(interval);
-
-  }, [profile]);
-
-
-
-  if (loading)
     return (
-      <div style={container}>
-        <h1 style={header}>Pharmacy Queue</h1>
-        <div style={messageInfo}>Loading...</div>
-      </div>
+
+        <div style={container}>
+
+            <h1 style={header}>
+                Pharmacy Queue
+            </h1>
+
+            <DashboardCards
+                pending={filteredPrescriptions.length}
+                ready={readyPrescriptions.length}
+            />
+
+            <SearchBar
+                search={search}
+                setSearch={setSearch}
+            />
+
+            {error &&
+                <div style={messageError}>
+                    {error}
+                </div>
+            }
+
+            {filteredPrescriptions.length === 0 ?
+
+                <div style={messageInfo}>
+                    No prescriptions pending
+                </div>
+
+                :
+
+                filteredPrescriptions.map(p => (
+
+                    <PendingPrescriptionCard
+
+                        key={p.id}
+
+                        prescription={p}
+
+                        dispensingId={dispensingId}
+
+                        onView={() =>
+                            setSelectedPrescription(p)
+                        }
+
+                    />
+
+                ))
+
+            }
+
+            <PrescriptionModal
+
+                prescription={selectedPrescription}
+
+                dispensingId={dispensingId}
+
+                onPrepare={prepareMedication}
+
+                onClose={() =>
+                    setSelectedPrescription(null)
+                }
+
+            />
+
+            <hr style={{ margin: "30px 0" }} />
+
+            <h2>
+                Ready For Collection
+            </h2>
+
+            {
+
+                readyPrescriptions.length === 0 ?
+
+                    <div style={messageInfo}>
+                        No medication ready for collection
+                    </div>
+
+                    :
+
+                    readyPrescriptions.map(p => (
+
+                        <ReadyPrescriptionCard
+
+                            key={p.id}
+
+                            prescription={p}
+
+                            onCollect={confirmCollection}
+
+                        />
+
+                    ))
+
+            }
+
+        </div>
+
     );
-
-
-
-  return (
-
-    <div style={container}>
-
-      <h1 style={header}> Pharmacy Queue </h1>
-
-      <div
-
-style={{
-
-display:"flex",
-
-gap:"15px",
-
-marginBottom:"20px"
-
-}}
-
->
-
-<div
-
-style={{
-
-...card,
-
-flex:1,
-
-textAlign:"center"
-
-}}
-
->
-
-<h3> Pending </h3>
-
-<h2> {prescriptions.length} </h2>
-
-</div>
-
-<div
-  style={{
-    ...card,
-    flex:1,
-    textAlign:"center"
-}}
-  >
-  <h3>Ready</h3>
-  <h2>{readyPrescriptions.length}</h2>
-</div>
-      </div>
-      
-      <input
-        type="text"
-        placeholder="Search patient name or ID..."
-        value={search}
-        onChange={(e)=>setSearch(e.target.value)}
-        
-        style={{
-          width:"100%",
-          padding:"12px",
-          marginBottom:"20px",
-          borderRadius:"8px",
-          border:"1px solid #ccc"
-        }}
-        />
-
-      {error && <div style={messageError}> {error}
-        </div>
-      }
-
-      {prescriptions.length === 0 &&
-
-        <div 
-          style={messageInfo}> No prescriptions pending
-        </div>
-
-      }
-      
-      {filteredPrescriptions.map(p => (
-
-        <div
-          key={p.id}
-          style={{
-            ...card,
-
-            border:
-              dispensingId === p.id
-                ? "2px solid green"
-                : undefined
-          }}
-        >
-          <div>
-
-            <strong>
-              {p.patient?.full_name}
-            </strong>
-
-            {" "}
-            {p.patient?.id_number}
-
-            
-          </div>
-
-          <div style={{ marginTop: 10 }}>
-  <strong>Medication Count</strong>
-
-  <br />
-
-  {(() => {
-
-  try {
-
-    const meds = parseMedications(p.medications);
-
-    return meds.length;
-
-  } catch {
-
-    return 0;
-
-  }
-
-})()}
-  
-  {" "}
-  items
-
-</div>
-          
-          <div>
-            Created:
-            {" "}
-            {new Date(
-              p.created_at
-            ).toLocaleString()}
-          </div>
-         
-          <button
-            style={{
-              ...buttonPrimary,
-              marginTop: 10
-             }}
-             onClick={() => setSelectedPrescription(p)}> View Prescription
-           </button>
-        </div>
-    ))}
-      
-      {selectedPrescription && (<>
-           <div
-        style={
-          {
-            ...card,marginTop: 20,
-            border: "2px solid #2563eb"
-          }
-        }
-        >
-        <h3>Prescription Details</h3>
-        <p>
-          <strong>Patient:</strong>{" "}
-          {selectedPrescription.patient?.full_name}
-        </p>
-        
-        <p>
-          <strong>ID Number:</strong>{" "}
-          {selectedPrescription.patient?.id_number}
-        </p>
-        
-        <p> <strong>Medication List:</strong> </p>
-        
-        <div style={{ marginBottom: 15 }}>
-
-  {(() => {
-
-    let meds = [];
-
-    try {
-
-      meds =
-        typeof selectedPrescription.medications === "string"
-          ? JSON.parse(selectedPrescription.medications)
-          : selectedPrescription.medications || [];
-
-    } catch {
-
-      meds = [];
-
-    }
-
-    return meds.map((med, index) => (
-
-      <div
-        key={index}
-        style={{
-          border: "1px solid #ddd",
-          padding: "10px",
-          marginBottom: "10px",
-          borderRadius: "8px"
-        }}
-      >
-
-        <strong>{med.name}</strong>
-
-        <div>
-          Dosage: {med.dosage}
-        </div>
-
-        <div>
-          Frequency: {med.frequency}
-        </div>
-
-      </div>
-
-    ));
-
-  })()}
-
-</div>
-        
-        <p> <strong>Doctor Notes:</strong> </p>
-        
-        <div style={{ marginBottom: 15 }}> {selectedPrescription.pharmacist_note || "None"}
-        </div>
-        
-        <button
-          style={buttonPrimary}
-          onClick={() => prepareMedication(selectedPrescription)
-          }
-          disabled={dispensingId === selectedPrescription.id}
-        >
-          {dispensingId === selectedPrescription.id
-            ? 
-          "Preparing...": "Prepare Medication"}
-        </button>
-        
-        <button
-          style={{marginLeft: 10}}
-              onClick={() => setSelectedPrescription(null)
-              }
-          >
-          Close
-        </button>
-      </div>
-     </>
-)}
-      <hr style={{ margin: "30px 0" }} />
-
-       <h2>Ready For Collection</h2>
-
-        {readyPrescriptions.length === 0 ? (
-
-        <div style={messageInfo}>
-        No medication ready for collection
-         </div>
-
-            ) : (
-
-            readyPrescriptions.map(p => (
-
-            <div
-            key={p.id}
-            style={{
-            ...card,
-            border: "2px solid green"
-           }}
-          >
-
-        <strong>{p.patient?.full_name}</strong>
-
-        <div>{p.patient?.id_number}</div>
-
-        <div style={{ marginTop: 10 }}>
-        {formatMedications(p.medications)}
-         </div>
-
-          <button
-            style={{
-              ...buttonPrimary,
-              marginTop: 15
-              }}
-              onClick={() => confirmCollection(p)}
-      >
-                Hand To Patient
-                </button>
-
-                 </div>
-))
-
-)}
-
-</div>
-
-);
 
 }
