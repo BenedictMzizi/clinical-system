@@ -1,4 +1,4 @@
-import { supabase } from "../../lib/supabase";
+E3 import { supabase } from "../../lib/supabase";
 
 import {
   globalInsert,
@@ -205,7 +205,15 @@ amount =
 ====================================================== */
 
 export function calculateConsultationBill(
-  consultationFee = 250
+  const consultationFee =
+
+await getServicePrice(
+
+    practiceId,
+
+    "CONSULTATION"
+
+);
 ) {
 
   return Number(consultationFee);
