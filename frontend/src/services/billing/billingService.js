@@ -162,8 +162,21 @@ export function calculateMedicationBill(
 
         : prescription.medications || [];
 
-    let amount =
-      medications.length * 10;
+    let const itemPrice =
+
+    await getServicePrice(
+
+        prescription.practice_id,
+
+        "MEDICATION_ITEM"
+
+    );
+
+amount =
+
+    medications.length *
+
+    itemPrice;;
 
     if (
       prescription.patient?.insurance
