@@ -1,4 +1,4 @@
-import { supabase } from "../lib/supabase";
+Hi import { supabase } from "../lib/supabase";
 import { VisitStatus } from "../constants/visitStatus";
 import { PrescriptionStatus } from "../constants/prescriptionStatus";
 import { BillingStatus } from "../constants/billingStatus";
@@ -184,7 +184,14 @@ async function createBilling(
 ) {
 
   const amount =
-    calculateBilling(prescription);
+
+await calculateMedicationBill(
+
+    prescription,
+
+    profile.practice_id
+
+);
 
   await globalInsert(
     "billing",
