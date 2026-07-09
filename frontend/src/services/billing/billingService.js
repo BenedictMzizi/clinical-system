@@ -399,7 +399,7 @@ export async function markPaid(
 
       payment_method: paymentMethod,
 
-      payment_reference: reference,
+      payment_reference: paymentReference,
 
       paid_by: paidBy,
 
