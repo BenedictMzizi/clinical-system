@@ -376,12 +376,12 @@ export async function markPending(
 export async function markPaid(
 
   billingId,
-
   paidBy,
-
-  paymentMethod = "Cash",
-
+  paymentMethod, 
   reference = null
+  paymentReference,
+  paidAmount,
+  changeAmount
 
 ) {
 
