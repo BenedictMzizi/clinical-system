@@ -75,18 +75,12 @@ try {
   const { data, error } =
     await supabase
       .from("billing")
-      .select(`
-        *,
-        patient:patients(
+      .select(`*,
+  patient:patients(
           id,
           full_name,
-          id_number
-        )
-      `)
-      .eq(
-        "status",
-        BillingStatus.PENDING
-      )
+          id_number)`)
+      .eq( "status", BillingStatus.PENDING)
       .eq(
         "practice_id",
         profile.practice_id
@@ -112,13 +106,12 @@ catch (err) {
 }
 
 setLoading(false);
-```
 
 }
 
 async function processPayment() {
 
-```
+
 if (!selectedBill) return;
 
 try {
@@ -165,8 +158,7 @@ try {
 
       actor_id: user.id,
 
-      action:
-        "PAYMENT_RECEIVED",
+      action: "PAYMENT_RECEIVED",
 
       entity: "billing",
 
