@@ -26,12 +26,6 @@ export default function usePharmacy() {
   const [dispensingId, setDispensingId] =
     useState(null);
 
-
-
-  //--------------------------------------------------
-  // Load Logged In User Profile
-  //--------------------------------------------------
-
   async function fetchProfile() {
 
     try {
@@ -58,10 +52,7 @@ export default function usePharmacy() {
 
 
 
-  //--------------------------------------------------
-  // Load Pending Prescriptions
-  //--------------------------------------------------
-
+  
   async function fetchPendingPrescriptions() {
 
     if (!profile?.practice_id)
@@ -91,9 +82,6 @@ export default function usePharmacy() {
 
 
 
-  //--------------------------------------------------
-  // Load Ready Prescriptions
-  //--------------------------------------------------
 
   async function fetchReadyPrescriptions() {
 
@@ -124,9 +112,6 @@ export default function usePharmacy() {
 
 
 
-  //--------------------------------------------------
-  // Refresh Everything
-  //--------------------------------------------------
 
   async function refreshData() {
 
@@ -155,9 +140,6 @@ export default function usePharmacy() {
 
 
 
-  //--------------------------------------------------
-  // Search Filter
-  //--------------------------------------------------
 
   const filteredPrescriptions =
     useMemo(() => {
@@ -196,9 +178,6 @@ export default function usePharmacy() {
 
 
 
-  //--------------------------------------------------
-  // Initial Load
-  //--------------------------------------------------
 
   useEffect(() => {
 
@@ -208,9 +187,6 @@ export default function usePharmacy() {
 
 
 
-  //--------------------------------------------------
-  // Load Queue Once Profile Exists
-  //--------------------------------------------------
 
   useEffect(() => {
 
@@ -227,9 +203,6 @@ export default function usePharmacy() {
 
 
 
-  //--------------------------------------------------
-  // Auto Refresh Every Minute
-  //--------------------------------------------------
 
   useEffect(() => {
 
@@ -281,11 +254,9 @@ export default function usePharmacy() {
     setDispensingId,
 
     refreshData
+  };
 
-    //--------------------------------------------------
-// Prepare Medication
-//--------------------------------------------------
-
+    
 async function prepareMedication(prescription) {
 
   if (dispensingId)
@@ -331,10 +302,7 @@ async function prepareMedication(prescription) {
 
 
 
- //--------------------------------------------------
- // Confirm Collection
- //--------------------------------------------------
-
+ 
  async function confirmCollection(prescription) {
 
   setError(null);
@@ -369,10 +337,7 @@ async function prepareMedication(prescription) {
 
 
 
- //--------------------------------------------------
- // Refresh Helper
- //--------------------------------------------------
-
+ 
  async function refreshQueue() {
 
   await refreshData();
@@ -381,10 +346,7 @@ async function prepareMedication(prescription) {
 
 
 
- //--------------------------------------------------
- // Return Everything
- //--------------------------------------------------
-
+ 
  return {
 
   loading,
@@ -393,50 +355,27 @@ async function prepareMedication(prescription) {
 
   profile,
 
-
-
-  // Search
-
   search,
 
   setSearch,
-
-
-
-  // Pending Queue
 
   prescriptions,
 
   filteredPrescriptions,
 
-
-
-  // Ready Queue
-
   readyPrescriptions,
-
-
-
-  // Selected Prescription
 
   selectedPrescription,
 
   setSelectedPrescription,
 
-
-
-  // Preparing
-
   dispensingId,
 
   setDispensingId,
 
-
   prepareMedication,
 
   confirmCollection,
-
-
 
   refreshQueue,
 
