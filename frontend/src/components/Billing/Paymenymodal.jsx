@@ -477,7 +477,22 @@ export default function PaymentModal({
                 }
 
                 <hr />
+<h3>Receipt Information</h3>
 
+<p>
+    <strong>Receipt Number:</strong>{" "}
+    {bill.receipt_number || "Will be generated"}
+</p>
+
+<p>
+    <strong>Cashier:</strong>{" "}
+    {bill.cashier?.full_name || profile?.full_name}
+</p>
+
+<p>
+    <strong>Date:</strong>{" "}
+    {new Date().toLocaleString()}
+</p>
                 {/* ======================================
                         ACTION BUTTONS
                 ======================================= */}
