@@ -73,10 +73,7 @@ export default function PrescriptionModal({
 
 
 
-            {/* ======================================
-                    PATIENT INFORMATION
-            ======================================= */}
-
+            
             <h3>
 
                 Patient Information
@@ -189,10 +186,6 @@ export default function PrescriptionModal({
             <hr />
 
 
-
-            {/* ======================================
-                    MEDICATION LIST
-            ======================================= */}
 
             <h3>
 
@@ -336,10 +329,7 @@ export default function PrescriptionModal({
 
 
 
-            {/* ======================================
-                    DOCTOR NOTES
-            ======================================= */}
-
+            
             <h3>
 
                 Doctor Notes
@@ -380,10 +370,7 @@ export default function PrescriptionModal({
 
 
 
-            {/* ======================================
-                    BILLING
-            ======================================= */}
-
+            
             <h3>
 
                 Billing Summary
@@ -466,10 +453,6 @@ export default function PrescriptionModal({
 
             </table>
             <hr />
-
-            {/* ======================================
-                    ACTIONS
-            ======================================= */}
 
             <div
                 style={{
