@@ -17,7 +17,6 @@ import {
 } from "../services/audit/auditService";
 
 
-
 export default function useBilling() {
 
     const [loading, setLoading] = useState(true);
@@ -26,37 +25,18 @@ export default function useBilling() {
 
     const [success, setSuccess] = useState(null);
 
-
-
     const [profile, setProfile] = useState(null);
-
-
 
     const [billing, setBilling] = useState([]);
 
     const [selectedBill, setSelectedBill] = useState(null);
 
-
-
     const [search, setSearch] = useState("");
 
+    const [paymentMethod, setPaymentMethod] = useState("Cash");
 
+    const [amountReceived, setAmountReceived] = useState("");
 
-    const [paymentMethod, setPaymentMethod] =
-
-        useState("Cash");
-
-
-
-    const [amountReceived, setAmountReceived] =
-
-        useState("");
-
-
-
-    //--------------------------------------------------
-    // Load profile
-    //--------------------------------------------------
 
     async function refreshProfile() {
 
@@ -86,11 +66,6 @@ export default function useBilling() {
 
     }
 
-
-
-    //--------------------------------------------------
-    // Load billing queue
-    //--------------------------------------------------
 
     async function refreshBilling() {
 
@@ -137,17 +112,13 @@ export default function useBilling() {
         }
 
     }
-      //--------------------------------------------------
-    // Initial Load
-    //--------------------------------------------------
+      
 
     useEffect(() => {
 
         refreshProfile();
 
     }, []);
-
-
 
 
     useEffect(() => {
@@ -160,51 +131,19 @@ export default function useBilling() {
 
 
 
-    //--------------------------------------------------
-    // Search
-    //--------------------------------------------------
-
     const filteredBilling =
 
         useMemo(() => {
 
             return billing.filter(bill => {
 
-                const patient =
+                const patient = bill.patient?.full_name  ?.toLowerCase() || "";
 
-                    bill.patient?.full_name
-
-                        ?.toLowerCase()
-
-                    || "";
-
-
-
-                const idNumber =
-
-                    bill.patient?.id_number
-
-                    || "";
-
-
+                const idNumber = bill.patient?.id_number || "";
 
                 return (
 
-                    patient.includes(
-
-                        search.toLowerCase()
-
-                    )
-
-                    ||
-
-                    idNumber.includes(
-
-                        search
-
-                    )
-
-                );
+                    patient.includes( search.toLowerCase())|| idNumber.includes(search) );
 
             });
 
@@ -216,11 +155,6 @@ export default function useBilling() {
 
         ]);
 
-
-
-    //--------------------------------------------------
-    // Dashboard Totals
-    //--------------------------------------------------
 
     const totalPending =
 
@@ -245,9 +179,7 @@ export default function useBilling() {
             [billing]
 
         );
-      //--------------------------------------------------
-    // Process Payment
-    //--------------------------------------------------
+      
 
     async function processPayment() {
 
@@ -340,20 +272,9 @@ export default function useBilling() {
     }
 
 
+    function openPayment(bill) {
 
-    //--------------------------------------------------
-    // Modal
-    //--------------------------------------------------
-
-    function openPayment(
-
-        bill
-
-    ) {
-
-        setSelectedBill(
-
-            bill
+        setSelectedBill(  bill
 
         );
 
