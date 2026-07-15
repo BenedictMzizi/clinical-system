@@ -32,11 +32,8 @@ export default function PrescriptionModal({
     }, [prescription]);
 
 
-
     if (!prescription)
         return null;
-
-
 
     return (
 
@@ -70,9 +67,6 @@ export default function PrescriptionModal({
             </h2>
 
             <hr />
-
-
-
             
             <h3>
 
