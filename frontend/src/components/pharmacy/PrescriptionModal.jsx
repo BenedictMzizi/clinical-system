@@ -534,6 +534,6 @@ export default function PrescriptionModal({
 
         </div>
 
+            </div>
     );
-
-      }
+}

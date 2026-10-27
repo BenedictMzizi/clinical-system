@@ -1,808 +1,299 @@
 import { supabase } from "../../lib/supabase";
-
-import {
-  globalInsert,
-  globalSelect,
-  globalUpdate
-} from "../../lib/globalDataLayer";
-
 import { BillingStatus } from "../../constants/billingStatus";
+import { getServicePrice } from "../pricing/pricingService";
 
+function requireId(value, label) {
+  if (!value) throw new Error(`${label} is required.`);
+}
 
-
-/* ======================================================
-   CURRENT USER
-====================================================== */
+function toMoney(value, label = "Amount") {
+  if (value === undefined || value === null || value === "") {
+    throw new Error(`${label} is required.`);
+  }
+  const amount = Number(value);
+  if (!Number.isFinite(amount) || amount < 0) {
+    throw new Error(`${label} must be a valid non-negative amount.`);
+  }
+  return Math.round((amount + Number.EPSILON) * 100) / 100;
+}
 
 export async function getCurrentUser() {
-
-  const {
-    data: { user },
-    error
-  } = await supabase.auth.getUser();
-
-  if (error)
-    throw error;
-
-  if (!user)
-    throw new Error("Not authenticated");
-
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error) throw error;
+  if (!user) throw new Error("Not authenticated.");
   return user;
-
 }
 
-
-
-/* ======================================================
-   BILLING EXISTS
-====================================================== */
-
-export async function billingExists(
-  prescriptionId
-) {
-
-  const billing =
-    await globalSelect(
-      "billing",
-      query =>
-        query
-          .select("id")
-          .eq(
-            "prescription_id",
-            prescriptionId
-          )
-          .limit(1)
-    );
-
-  return billing?.length > 0;
-
+export async function billingExists(prescriptionId) {
+  requireId(prescriptionId, "Prescription");
+  const { data, error } = await supabase
+    .from("billing")
+    .select("id")
+    .eq("prescription_id", prescriptionId)
+    .limit(1);
+  if (error) throw error;
+  return (data || []).length > 0;
 }
 
-
-
-/* ======================================================
-   GET BILL BY PRESCRIPTION
-====================================================== */
-
-export async function getBillingByPrescription(
-  prescriptionId
-) {
-
-  const billing =
-    await globalSelect(
-      "billing",
-      query =>
-        query
-          .select("*")
-          .eq(
-            "prescription_id",
-            prescriptionId
-          )
-          .single()
-    );
-
-  return billing;
-
+export async function getBillingByPrescription(prescriptionId) {
+  requireId(prescriptionId, "Prescription");
+  const { data, error } = await supabase
+    .from("billing")
+    .select("*")
+    .eq("prescription_id", prescriptionId)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
 }
 
-
-
-/* ======================================================
-   GET BILL
-====================================================== */
-
-export async function getBilling(
-  billingId
-) {
-
-  const billing =
-    await globalSelect(
-      "billing",
-      query =>
-        query
-          .select("*")
-          .eq("id", billingId)
-          .single()
-    );
-
-  return billing;
-
+export async function getBilling(billingId) {
+  requireId(billingId, "Bill");
+  const { data, error } = await supabase
+    .from("billing")
+    .select("*")
+    .eq("id", billingId)
+    .single();
+  if (error) throw error;
+  return data;
 }
 
-
-
-/* ======================================================
-   GET PATIENT BILLING
-====================================================== */
-
-export async function getPatientBilling(
-  patientId
-) {
-
-  const billing =
-    await globalSelect(
-      "billing",
-      query =>
-        query
-          .select("*")
-          .eq(
-            "patient_id",
-            patientId
-          )
-          .order(
-            "created_at",
-            {
-              ascending: false
-            }
-          )
-    );
-
-  return billing || [];
-
+export async function getPatientBilling(patientId) {
+  requireId(patientId, "Patient");
+  const { data, error } = await supabase
+    .from("billing")
+    .select("*")
+    .eq("patient_id", patientId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data || [];
 }
 
-
-
-/* ======================================================
-   CALCULATE PHARMACY BILL
-====================================================== */
-
-export function calculateMedicationBill(
-  prescription
-) {
-
+function parseMedicationList(value) {
+  if (Array.isArray(value)) return value;
+  if (!value) return [];
+  if (typeof value !== "string") return [];
   try {
-
-    const medications =
-      typeof prescription.medications === "string"
-
-        ? JSON.parse(
-            prescription.medications
-          )
-
-        : prescription.medications || [];
-
-    let const itemPrice =
-
-    await getServicePrice(
-
-        prescription.practice_id,
-
-        "MEDICATION_ITEM"
-
-    );
-
-amount =
-
-    medications.length *
-
-    itemPrice;;
-
-    if (
-      prescription.patient?.insurance
-    ) {
-
-      amount = 0;
-
-    }
-
-    return amount;
-
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
   }
-
-  catch {
-
-    return 0;
-
-  }
-
 }
 
-
-
-/* ======================================================
-   CALCULATE CONSULTATION BILL
-====================================================== */
-
-export function calculateConsultationBill(
-  const consultationFee =
-
-await getServicePrice(
-
-    practiceId,
-
-    "CONSULTATION"
-
-);
-) {
-
-  return Number(consultationFee);
-
+/** Prices one unit per prescribed medication. Configure MEDICATION_ITEM in service_pricing. */
+export async function calculateMedicationBill(prescription, practiceId = prescription?.practice_id) {
+  if (!prescription) throw new Error("Prescription is required.");
+  requireId(practiceId, "Practice");
+  const medications = parseMedicationList(prescription.medications);
+  if (!medications.length) return 0;
+  const itemPrice = await getServicePrice(practiceId, "MEDICATION_ITEM");
+  return toMoney(medications.length * itemPrice);
 }
 
-
-
-/* ======================================================
-   CALCULATE LAB BILL
-====================================================== */
-
-export function calculateLabBill(
-  tests = []
-) {
-
-  if (!Array.isArray(tests))
-    return 0;
-
-  return tests.reduce(
-
-    (total, test) =>
-
-      total +
-      Number(
-        test.price || 0
-      ),
-
-    0
-
-  );
-
+export async function calculateConsultationBill(practiceId) {
+  requireId(practiceId, "Practice");
+  return toMoney(await getServicePrice(practiceId, "CONSULTATION"));
 }
-/* ======================================================
-   CREATE BILLING
-====================================================== */
+
+export function calculateLabBill(tests = []) {
+  if (!Array.isArray(tests)) throw new Error("Tests must be a list.");
+  return toMoney(tests.reduce((total, test) => total + toMoney(test?.price ?? 0, "Test price"), 0));
+}
 
 export async function createBilling({
-
   practiceId,
-
   prescriptionId = null,
-
   visitId = null,
-
   patientId,
-
   amount,
-
   status = BillingStatus.PENDING,
-
   description = "",
-
-  createdBy
-
+  createdBy,
 }) {
-
+  requireId(practiceId, "Practice");
+  requireId(patientId, "Patient");
+  const billAmount = toMoney(amount);
+  if (![BillingStatus.PENDING, BillingStatus.PAID].includes(status)) {
+    throw new Error("Unsupported initial billing status.");
+  }
+  if (status === BillingStatus.PAID) {
+    throw new Error("Create a bill as pending, then record payment through markPaid.");
+  }
   const now = new Date().toISOString();
-
-  return await globalInsert(
-
-    "billing",
-
-    {
-
+  const { data, error } = await supabase
+    .from("billing")
+    .insert({
       practice_id: practiceId,
-
       prescription_id: prescriptionId,
-
       visit_id: visitId,
-
       patient_id: patientId,
-
-      amount,
-
+      amount: billAmount,
       status,
-
       description,
-
-      created_by: createdBy,
-
+      created_by: createdBy || null,
       created_at: now,
-
-      updated_at: now
-
-    }
-
-  );
-
+      updated_at: now,
+    })
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data;
 }
 
-
-
-/* ======================================================
-   UPDATE BILL AMOUNT
-====================================================== */
-
-export async function updateBillAmount(
-
-  billingId,
-
-  amount
-
-) {
-
-  return await globalUpdate(
-
-    "billing",
-
-    { id: billingId },
-
-    {
-
-      amount,
-
-      updated_at: new Date().toISOString()
-
-    }
-
-  );
-
+export async function updateBillAmount(billingId, amount) {
+  requireId(billingId, "Bill");
+  const billAmount = toMoney(amount);
+  const { data, error } = await supabase
+    .from("billing")
+    .update({ amount: billAmount, updated_at: new Date().toISOString() })
+    .eq("id", billingId)
+    .eq("status", BillingStatus.PENDING)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data;
 }
 
-
-
-/* ======================================================
-   MARK BILL PENDING
-====================================================== */
-
-export async function markPending(
-
-  billingId
-
-) {
-
-  return await globalUpdate(
-
-    "billing",
-
-    { id: billingId },
-
-    {
-
-      status: BillingStatus.PENDING,
-
-      updated_at: new Date().toISOString()
-
-    }
-
-  );
-
+export async function markPending(billingId) {
+  requireId(billingId, "Bill");
+  const { data, error } = await supabase
+    .from("billing")
+    .update({ status: BillingStatus.PENDING, updated_at: new Date().toISOString() })
+    .eq("id", billingId)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data;
 }
 
-
-
-/* ======================================================
-   MARK BILL PAID
-====================================================== */
-
+/** Records a full payment on the existing billing row. Partial payments need a payment-ledger migration first. */
 export async function markPaid(
-
   billingId,
   paidBy,
-  paymentMethod, 
-  reference = null
-  paymentReference,
+  paymentMethod,
+  paymentReference = null,
   paidAmount,
-  changeAmount
-
+  changeAmount = 0,
 ) {
+  requireId(billingId, "Bill");
+  requireId(paidBy, "Cashier");
+  if (!paymentMethod || !["Cash", "Card", "EFT", "Medical Aid", "Other"].includes(paymentMethod)) {
+    throw new Error("Choose a valid payment method.");
+  }
+  const received = toMoney(paidAmount, "Amount received");
+  const change = toMoney(changeAmount, "Change");
+  if (received <= 0) throw new Error("Payment must be greater than zero.");
+
+  const bill = await getBilling(billingId);
+  if (bill.status !== BillingStatus.PENDING) {
+    throw new Error("This bill is no longer pending payment. Refresh the queue and try again.");
+  }
+  const due = toMoney(bill.amount, "Bill amount");
+  if (received < due) throw new Error("Payment is less than the amount due.");
+  if (Math.abs((received - due) - change) > 0.01) {
+    throw new Error("The calculated change does not match the payment amount.");
+  }
 
   const now = new Date().toISOString();
-
-  return await globalUpdate(
-
-    "billing",
-
-    { id: billingId },
-
-    {
-
+  const { data, error } = await supabase
+    .from("billing")
+    .update({
       status: BillingStatus.PAID,
-
       payment_method: paymentMethod,
-
       payment_reference: paymentReference,
-
+      paid_amount: received,
+      change_amount: change,
       paid_by: paidBy,
-
       paid_at: now,
-
-      updated_at: now
-
-    }
-
-  );
-
+      updated_at: now,
+    })
+    .eq("id", billingId)
+    .eq("status", BillingStatus.PENDING)
+    .select("*")
+    .single();
+  if (error) throw error;
+  if (!data) throw new Error("Payment was not saved. Refresh the queue and try again.");
+  return data;
 }
 
-
-
-/* ======================================================
-   CANCEL BILL
-====================================================== */
-
-export async function cancelBill(
-
-  billingId,
-
-  reason = ""
-
-) {
-
-  return await globalUpdate(
-
-    "billing",
-
-    { id: billingId },
-
-    {
-
-      status: BillingStatus.CANCELLED,
-
-      cancellation_reason: reason,
-
-      cancelled_at: new Date().toISOString(),
-
-      updated_at: new Date().toISOString()
-
-    }
-
-  );
-
+export async function cancelBill(billingId, reason = "") {
+  requireId(billingId, "Bill");
+  const { data, error } = await supabase
+    .from("billing")
+    .update({ status: BillingStatus.CANCELLED, cancellation_reason: reason, cancelled_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+    .eq("id", billingId)
+    .eq("status", BillingStatus.PENDING)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data;
 }
 
-
-
-/* ======================================================
-   REFUND BILL
-====================================================== */
-
-export async function refundBill(
-
-  billingId,
-
-  refundedBy,
-
-  reason = ""
-
-) {
-
-  return await globalUpdate(
-
-    "billing",
-
-    { id: billingId },
-
-    {
-
-      status: BillingStatus.REFUNDED,
-
-      refunded_by: refundedBy,
-
-      refund_reason: reason,
-
-      refunded_at: new Date().toISOString(),
-
-      updated_at: new Date().toISOString()
-
-    }
-
-  );
-
-    }
-/* ======================================================
-   GET ALL BILLS FOR A PRACTICE
-====================================================== */
-
-export async function getBillsByPractice(
-  practiceId
-) {
-
-  const bills =
-    await globalSelect(
-      "billing",
-      query =>
-        query
-          .select(`
-            *,
-            patient:patients(
-              id,
-              full_name,
-              id_number
-            )
-          `)
-          .eq(
-            "practice_id",
-            practiceId
-          )
-          .order(
-            "created_at",
-            {
-              ascending: false
-            }
-          )
-    );
-
-  return bills || [];
-
+export async function refundBill(billingId, refundedBy, reason = "") {
+  requireId(billingId, "Bill");
+  requireId(refundedBy, "Refunding staff member");
+  const { data, error } = await supabase
+    .from("billing")
+    .update({ status: BillingStatus.REFUNDED, refunded_by: refundedBy, refund_reason: reason, refunded_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+    .eq("id", billingId)
+    .eq("status", BillingStatus.PAID)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data;
 }
 
+const BILL_SELECT = `*, patient:patients(id, full_name, id_number)`;
 
-
-/* ======================================================
-   GET OUTSTANDING BILLS
-====================================================== */
-
-export async function getOutstandingBills(
-  practiceId
-) {
-
-  const bills =
-    await globalSelect(
-      "billing",
-      query =>
-        query
-          .select(`
-            *,
-            patient:patients(
-              id,
-              full_name
-            )
-          `)
-          .eq(
-            "practice_id",
-            practiceId
-          )
-          .eq(
-            "status",
-            BillingStatus.PENDING
-          )
-    );
-
-  return bills || [];
-
+export async function getBillsByPractice(practiceId) {
+  requireId(practiceId, "Practice");
+  const { data, error } = await supabase.from("billing").select(BILL_SELECT).eq("practice_id", practiceId).order("created_at", { ascending: false });
+  if (error) throw error;
+  return data || [];
 }
 
-
-
-/* ======================================================
-   GET PAID BILLS
-====================================================== */
-
-export async function getPaidBills(
-  practiceId
-) {
-
-  const bills =
-    await globalSelect(
-      "billing",
-      query =>
-        query
-          .select(`
-            *,
-            patient:patients(
-              id,
-              full_name
-            )
-          `)
-          .eq(
-            "practice_id",
-            practiceId
-          )
-          .eq(
-            "status",
-            BillingStatus.PAID
-          )
-          .order(
-            "paid_at",
-            {
-              ascending: false
-            }
-          )
-    );
-
-  return bills || [];
-
+export async function getOutstandingBills(practiceId) {
+  requireId(practiceId, "Practice");
+  const { data, error } = await supabase.from("billing").select(BILL_SELECT).eq("practice_id", practiceId).eq("status", BillingStatus.PENDING).order("created_at", { ascending: true });
+  if (error) throw error;
+  return data || [];
 }
 
-
-
-/* ======================================================
-   GET BILLS BY DATE RANGE
-====================================================== */
-
-export async function getBillsByDateRange(
-
-  practiceId,
-
-  startDate,
-
-  endDate
-
-) {
-
-  const bills =
-    await globalSelect(
-      "billing",
-      query =>
-        query
-          .select("*")
-          .eq(
-            "practice_id",
-            practiceId
-          )
-          .gte(
-            "created_at",
-            startDate
-          )
-          .lte(
-            "created_at",
-            endDate
-          )
-    );
-
-  return bills || [];
-
+export async function getPaidBills(practiceId) {
+  requireId(practiceId, "Practice");
+  const { data, error } = await supabase.from("billing").select(BILL_SELECT).eq("practice_id", practiceId).eq("status", BillingStatus.PAID).order("paid_at", { ascending: false });
+  if (error) throw error;
+  return data || [];
 }
 
-
-
-/* ======================================================
-   BILLING SUMMARY
-====================================================== */
-
-export function getBillingSummary(
-  bills = []
-) {
-
-  const summary = {
-
-    totalBills: bills.length,
-
-    pendingBills: 0,
-
-    paidBills: 0,
-
-    cancelledBills: 0,
-
-    refundedBills: 0,
-
-    totalRevenue: 0,
-
-    outstandingAmount: 0
-
-  };
-
-
-
-  bills.forEach(bill => {
-
-    const amount =
-      Number(bill.amount || 0);
-
-    switch (bill.status) {
-
-      case BillingStatus.PAID:
-
-        summary.paidBills++;
-
-        summary.totalRevenue += amount;
-
-        break;
-
-      case BillingStatus.PENDING:
-
-        summary.pendingBills++;
-
-        summary.outstandingAmount += amount;
-
-        break;
-
-      case BillingStatus.CANCELLED:
-
-        summary.cancelledBills++;
-
-        break;
-
-      case BillingStatus.REFUNDED:
-
-        summary.refundedBills++;
-
-        break;
-
-      default:
-
-        break;
-
-    }
-
-  });
-
-  return summary;
-
+export async function getBillsByDateRange(practiceId, startDate, endDate) {
+  requireId(practiceId, "Practice");
+  if (!startDate || !endDate || new Date(startDate) > new Date(endDate)) throw new Error("A valid date range is required.");
+  const { data, error } = await supabase.from("billing").select(BILL_SELECT).eq("practice_id", practiceId).gte("created_at", startDate).lte("created_at", endDate).order("created_at", { ascending: false });
+  if (error) throw error;
+  return data || [];
 }
 
-
-
-/* ======================================================
-   DELETE BILL (ADMIN ONLY)
-====================================================== */
-
-export async function deleteBill(
-  billingId
-) {
-
-  const { error } =
-    await supabase
-      .from("billing")
-      .delete()
-      .eq("id", billingId);
-
-  if (error)
-    throw error;
-
+export function getBillingSummary(bills = []) {
+  return bills.reduce((summary, bill) => {
+    const amount = Number(bill.amount || 0);
+    summary.totalBills += 1;
+    if (bill.status === BillingStatus.PAID) { summary.paidBills += 1; summary.totalRevenue += amount; }
+    else if (bill.status === BillingStatus.PENDING) { summary.pendingBills += 1; summary.outstandingAmount += amount; }
+    else if (bill.status === BillingStatus.CANCELLED) summary.cancelledBills += 1;
+    else if (bill.status === BillingStatus.REFUNDED) summary.refundedBills += 1;
+    return summary;
+  }, { totalBills: 0, pendingBills: 0, paidBills: 0, cancelledBills: 0, refundedBills: 0, totalRevenue: 0, outstandingAmount: 0 });
 }
 
-
-export async function calculateMedicationBill(
-
-    prescription,
-
-    practiceId
-
-){
-
-    const medications =
-
-        parseMedications(
-
-            prescription.medications
-
-        );
-
-    const medicationPrice =
-
-        await getServicePrice(
-
-            practiceId,
-
-            "MEDICATION_ITEM"
-
-        );
-
-    return medications.length *
-
-        medicationPrice;
-
+export async function deleteBill(billingId) {
+  requireId(billingId, "Bill");
+  const { error } = await supabase.from("billing").delete().eq("id", billingId).eq("status", BillingStatus.PENDING);
+  if (error) throw error;
 }
-/* ======================================================
-   VALIDATE BILL
-====================================================== */
 
-export function validateBilling({
-
-  patientId,
-
-  amount
-
-}) {
-
-  if (!patientId)
-    throw new Error(
-      "Patient is required."
-    );
-
-  if (
-    amount === undefined ||
-    amount === null
-  )
-    throw new Error(
-      "Amount is required."
-    );
-
-  if (Number(amount) < 0)
-    throw new Error(
-      "Amount cannot be negative."
-    );
-
+export function validateBilling({ patientId, amount }) {
+  requireId(patientId, "Patient");
+  toMoney(amount);
   return true;
-
-            }
+}

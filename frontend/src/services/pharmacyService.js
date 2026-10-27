@@ -1,12 +1,13 @@
-Hi import { supabase } from "../lib/supabase";
+import { supabase } from "../lib/supabase";
 import { VisitStatus } from "../constants/visitStatus";
 import { PrescriptionStatus } from "../constants/prescriptionStatus";
 import { BillingStatus } from "../constants/billingStatus";
+import { calculateMedicationBill, createBilling as createBillingRecord } from "./billing/billingService";
 
 
 import {
   globalInsert,
-  global Update, 
+  globalUpdate, 
   globalSelect
 } from "../lib/globalDataLayer";
 
@@ -108,56 +109,17 @@ export async function getReadyPrescriptions(practiceId) {
 }
 
 export async function billingExists(prescriptionId) {
-
-  const billing =
-    await globalSelect(
-      "billing",
-      query =>
-        query
-          .select("id")
-          .eq(
-            "prescription_id",
-            prescriptionId
-          )
-          .limit(1)
-    );
-
-  return billing?.length > 0;
-
+  const { data, error } = await supabase
+    .from("billing")
+    .select("id")
+    .eq("prescription_id", prescriptionId)
+    .limit(1);
+  if (error) throw error;
+  return (data || []).length > 0;
 }
 
-export function calculateBilling(prescription) {
-
-  try {
-
-    const medications =
-      typeof prescription.medications === "string"
-
-        ? JSON.parse(
-            prescription.medications
-          )
-
-        : prescription.medications || [];
-
-    let amount =
-      medications.length * 10;
-
-    if (
-      prescription.patient?.insurance === true
-    ) {
-
-      amount = 0;
-
-    }
-
-    return amount;
-
-  } catch {
-
-    return 0;
-
-  }
-
+export async function calculateBilling(prescription, practiceId = prescription?.practice_id) {
+  return calculateMedicationBill(prescription, practiceId);
 }
 
 export async function getCurrentUser() {
@@ -177,51 +139,19 @@ export async function getCurrentUser() {
 
 }
 
-async function createBilling(
-  prescription,
-  profile,
-  user
-) {
-
-  const amount =
-
-await calculateMedicationBill(
-
-    prescription,
-
-    profile.practice_id
-
-);
-
-  await globalInsert(
-    "billing",
-    {
-      practice_id: profile.practice_id,
-
-      prescription_id: prescription.id,
-
-      visit_id: prescription.visit_id,
-
-      patient_id: prescription.patient_id,
-
-      amount,
-
-      status:
-        amount > 0
-          ? BillingStatus.PENDING
-          : BillingStatus.PAIDCONSULTATION,
-
-      created_by: user.id,
-
-      created_at:
-        new Date().toISOString()
-
-    }
-  );
-
+async function createBilling(prescription, profile, user) {
+  const amount = await calculateBilling(prescription, profile.practice_id);
+  return createBillingRecord({
+    practiceId: profile.practice_id,
+    prescriptionId: prescription.id,
+    visitId: prescription.visit_id || null,
+    patientId: prescription.patient_id,
+    amount,
+    status: BillingStatus.PENDING,
+    description: "Medication dispensing",
+    createdBy: user.id,
+  });
 }
-
-
 
 
 async function markPrescriptionPrepared(

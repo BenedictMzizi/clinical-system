@@ -1,5 +1,7 @@
-export const BillingStatus = {
+export const BillingStatus = Object.freeze({
   PENDING: "PENDING",
   PAID: "PAID",
-  PAIDCONSULTATION: "PAIDCONSULTATION" 
-};
+  PAIDCONSULTATION: "PAIDCONSULTATION",
+  CANCELLED: "CANCELLED",
+  REFUNDED: "REFUNDED",
+});
