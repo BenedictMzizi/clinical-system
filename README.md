@@ -208,11 +208,11 @@ The following screenshots demonstrate the current HWMS interface and its integra
 
 <img width="100%" src="https://github.com/user-attachments/assets/defbf928-0633-4ced-b863-639116bcfa46" alt="HWMS Nursing and Vitals Workflow">
 
-### 4. Doctor Consultation
+### 4. Reception 
 
 <img width="100%" src="https://github.com/user-attachments/assets/da6d4acf-72cf-4cc5-947d-2b2f2676d97e" alt="HWMS Doctor Consultation">
 
-### 5. Pharmacy Management
+### 5. login
 
 <img width="100%" src="https://github.com/user-attachments/assets/e2ff8f10-d33e-44e2-a9e0-98d116904c6e" alt="HWMS Pharmacy Management">
 
