@@ -196,11 +196,11 @@ Security is a core consideration in the HWMS architecture.
 
 The following screenshots demonstrate the current HWMS interface and its integrated departmental workflows.
 
-### 1. Reception Dashboard
+### 1. Pharmacy 
 
 <img width="100%" src="https://github.com/user-attachments/assets/0b2bf468-a2b8-4a40-b8db-69d49641fee4" alt="HWMS Reception Dashboard">
 
-### 2. Patient Registration and Management
+### 2. Consultation
 
 <img width="100%" src="https://github.com/user-attachments/assets/06968678-b4b0-4a1c-8cf7-febdc016e1d7" alt="HWMS Patient Registration">
 
@@ -208,7 +208,7 @@ The following screenshots demonstrate the current HWMS interface and its integra
 
 <img width="100%" src="https://github.com/user-attachments/assets/defbf928-0633-4ced-b863-639116bcfa46" alt="HWMS Nursing and Vitals Workflow">
 
-### 4. Reception 
+### 4. Patient Registration and Management 
 
 <img width="100%" src="https://github.com/user-attachments/assets/da6d4acf-72cf-4cc5-947d-2b2f2676d97e" alt="HWMS Doctor Consultation">
 
